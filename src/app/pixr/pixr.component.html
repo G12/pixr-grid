@@ -1,0 +1,30 @@
+<mat-expansion-panel (opened)="panelOpenState = true"
+                     (closed)="panelOpenState = false"
+                      [expanded]="expandMe">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <h1>Project Info</h1>&nbsp;&nbsp;&nbsp;<span class="memo">
+          Tap to {{panelOpenState ? 'Close' : 'Open'}}</span>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <h1 *ngIf="authService.afAuth.user | async as  user">
+    Hello {{SavedIngressName}}</h1>
+  <div *ngIf="!canvas">
+  <div class="example-label">to continue Please enter your Ingres Name</div>
+  <div class="example-button-row">
+    <div class="example-flex-container">
+      <div class="example-button-container">
+        <button mat-fab color="primary" aria-label="Ingress Name"
+        (click)="setIngressName()">
+          <mat-icon>mode</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  </div>
+</mat-expansion-panel>
+<div>
+  <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="img.width" [height]="img.height"></canvas>
+</div>
+
+

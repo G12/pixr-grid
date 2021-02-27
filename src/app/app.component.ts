@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import {AuthService} from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,11 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'pixr';
+  constructor(public authService: AuthService) {
+  }
+  login(): void {
+    this.authService.loginWithGoogle().then((user) => {
+      console.log(user);
+    });
+  }
 }
