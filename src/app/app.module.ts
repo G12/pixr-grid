@@ -6,18 +6,21 @@ import {AngularFireModule} from '@angular/fire';
 import {environment} from '../environments/environment';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MaterialModule} from './modules/material.module';
-import {PixrComponent} from './pixr/pixr.component';
+import {PixrComponent, PortalInfoDialogComponent} from './pixr/pixr.component';
+import {FormsModule} from '@angular/forms';
 
 @NgModule({
   declarations: [
     AppComponent,
-    PixrComponent
+    PixrComponent,
+    PortalInfoDialogComponent
   ],
   imports: [
     BrowserModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

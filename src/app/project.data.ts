@@ -1,15 +1,23 @@
 
 export interface PortalRec {
+  colName: string;
   l: number;
   t: number;
   r: number;
   b: number;
 }
 
+export interface Column{
+  name: string;
+  offset: number;
+  width: number;
+  portals?: PortalRec[];
+}
+
 export interface RawData {
   id?: string;
   name: string;
-  portals: PortalRec[];
+  columns: Column[];
 }
 
 export interface PortalData {
@@ -35,6 +43,7 @@ export interface CanvasData {
   srcHeight: number;
   srcWidth: number;
   displayWidth: number;
+  displayHeight: number;
   columnCollection: ColumnData[];
 }
 
@@ -53,10 +62,10 @@ export interface ProjectUser {
 
 export interface FirstSatProject {
   id?: string;
-  name?: string;
-  date?: string;
-  projectUsers?: ProjectUser[];
-  canvasData?: CanvasData;
+  name: string;
+  date: string;
+  projectUsers: ProjectUser[];
+  canvasData: CanvasData;
 }
 
 // NOTE all fields are optional since firebase returns unknown TODO more research needed here
@@ -73,4 +82,9 @@ export interface BootParams {
 export interface IngressNameData {
   id: string;
   name: string;
+}
+
+export interface DialogData {
+  name: string;
+  url: string;
 }

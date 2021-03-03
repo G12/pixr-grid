@@ -1,30 +1,43 @@
+<button *ngIf="authService.afAuth.user"
+        class="btnLogout" [style.left.px]="left"
+        mat-mini-fab aria-label="logout"
+        (click)="logout()">
+  <mat-icon>logout</mat-icon>
+</button>
+<div class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">{{bannerInfo}}</div>
+<div class="container">
 <mat-expansion-panel (opened)="panelOpenState = true"
                      (closed)="panelOpenState = false"
-                      [expanded]="expandMe">
+                     [expanded]="expandMe">
   <mat-expansion-panel-header>
     <mat-panel-title>
-      <h1>Project Info</h1>&nbsp;&nbsp;&nbsp;<span class="memo">
-          Tap to {{panelOpenState ? 'Close' : 'Open'}}</span>
+      &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
     </mat-panel-title>
   </mat-expansion-panel-header>
-  <h1 *ngIf="authService.afAuth.user | async as  user">
-    Hello {{SavedIngressName}}</h1>
-  <div *ngIf="!canvas">
-  <div class="example-label">to continue Please enter your Ingres Name</div>
-  <div class="example-button-row">
-    <div class="example-flex-container">
-      <div class="example-button-container">
-        <button mat-fab color="primary" aria-label="Ingress Name"
-        (click)="setIngressName()">
-          <mat-icon>mode</mat-icon>
-        </button>
+  <div *ngIf="!canvas; else Content" class="example-button-row">
+    <h1 *ngIf="firstSatProject">{{firstSatProject.name}}</h1>
+    <button mat-raised-button color="primary"
+            (click)="setIngressName()">
+      To continue Enter Ingress Name
+    </button>
+  </div>
+  <ng-template #Content>
+  <div class="content">
+    <h1>Tap on a Portal Image: enter Portal Name and Location </h1>
+  </div>
+  </ng-template>
+</mat-expansion-panel>
+
+<div>
+  <div class="header" [style.width.px]="width">
+    <div *ngIf="canvas">
+      <div class="column" [style.width.px]="column.width"
+           *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
+        {{column.name}}
       </div>
     </div>
   </div>
-  </div>
-</mat-expansion-panel>
-<div>
-  <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="img.width" [height]="img.height"></canvas>
+  <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
 </div>
-
+</div>
 

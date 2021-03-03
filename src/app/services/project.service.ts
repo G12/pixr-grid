@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BootParam, CanvasData, ColumnData, FirstSatProject, PortalData, ProjectUser, RawData} from '../project.data';
+import {BootParam, FirstSatProject, PortalData, ProjectUser, RawData} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
@@ -8,30 +8,6 @@ import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
   providedIn: 'root'
 })
 export class ProjectService {
-
-  //////////////////////  Declare and initialize  objects /////////////////////
-  portalData: PortalData = {
-    colName: '',
-    x: 0,
-    y: 0,
-    x2: 0,
-    y2: 0,
-  };
-
-  columnData: ColumnData = {
-    name: '',
-    width: 0,
-    offset: 0,
-    portals: null,
-  };
-
-  canvasData: CanvasData = {
-    imgUrl: '',
-    srcHeight: 100,
-    srcWidth: 100,
-    displayWidth: 100,
-    columnCollection: null,
-  };
 
   projectUser: ProjectUser = {
     uid: '',
@@ -47,8 +23,8 @@ export class ProjectService {
     canvasData: null,
   };
 
-  portals: PortalData[] = [];
-  columnCollection: ColumnData[] = [];
+  // portals: PortalData[] = [];
+  // columnCollection: ColumnData[] = [];
   projectUsers: ProjectUser[] = [];
 
   projectId: string;
@@ -61,11 +37,12 @@ export class ProjectService {
   userBootParamDocRef: AngularFirestoreDocument;
   adminBootParamDocRef: AngularFirestoreDocument;
   firstSatProjectDocRef: AngularFirestoreDocument;
+  rawDataDocRef: AngularFirestoreDocument;
 
   constructor(private firestore: AngularFirestore) {
-    this.columnData.portals = this.portals;
-    this.canvasData.columnCollection = this.columnCollection;
-    this.firstSatProject.canvasData = this.canvasData;
+    // this.columnData.portals = this.portals;
+    // this.canvasData.columnCollection = this.columnCollection;
+    // this.firstSatProject.canvasData = this.canvasData;
     this.firstSatProject.projectUsers = this.projectUsers;
 
     // get a reference to the AngularFirestoreDocuments
@@ -80,6 +57,10 @@ export class ProjectService {
     return this.firstSatProjectDocRef;
   }
 
+  getRawDataDocRef(projectId): AngularFirestoreDocument{
+    this.rawDataDocRef = this.firestore.collection('raw_data_projects').doc(projectId);
+    return this.rawDataDocRef;
+  }
 
   ////////////////////////////  first_sat_projects //////////////////////
 

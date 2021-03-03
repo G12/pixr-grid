@@ -1,32 +1,80 @@
+.header {
+  padding: 5px;
+  font-weight: bold;
+}
+.column {
+  display: inline-block;
+  border: black solid 2px;
+  border-right: black solid 1px;
+  border-left: black solid 1px;
+  text-align: center;
+  height: 100px;
+}
+
+.container {
+  margin-top: 48px;
+}
+.btnLogout {
+  position: absolute;
+  top: 0;
+  z-index: 1000;
+  margin: 8px;
+  margin-left: 16px;
+  width: 40px;
+}
+.banner {
+  position: absolute;
+  top: 0;
+  z-index: 999;
+  margin: 8px;
+  background-color: black;
+  color: chartreuse;
+  padding: 8px;
+  text-align: left;
+  vertical-align: bottom;
+  height: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.memo {
+  padding-left: 40px;
+}
+.content {
+  border: darkgray solid 2px;
+  padding: 8px;
+  width: 100%;
+  min-height: 400px;
+  margin: 0;
+}
 .canvasAttr {
   margin: 0;
   border: black solid 2px;
+  overflow: hidden;
 }
-
 .example-label {
   display: table-cell;
   font-size: large;
   margin-left: 8px;
   min-width: 120px;
 }
-
 .example-button-row {
   display: table-cell;
   width: 490px;
 }
-
 .example-button-row .mat-button-base {
-  margin: 8px 8px 8px 0;
+  margin: 8px 8px 8px 8px;
 }
-
 .example-flex-container {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
 }
-
 .example-button-container {
   display: flex;
   justify-content: center;
   width: 120px;
+}
+.wrapper {
+  overflow: hidden;
 }
