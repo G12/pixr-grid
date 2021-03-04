@@ -6,6 +6,7 @@ import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {Subscription} from 'rxjs';
+import {MapDialogComponent} from '../dialogs/map/map-dialog.component';
 
 @Component({
   selector: 'app-pixr',
@@ -307,14 +308,15 @@ export class PixrComponent implements OnInit {
   }
 
   showColumnInfo(column: Column): void {
-    alert('open Column Info dialog');
-    this.drawPortalFrames();
+    this.openMapDialog(this.dialogData);
+    // alert('open Column Info dialog');
+    // this.drawPortalFrames();
   }
 
   openPortalDialog(dialogData: DialogData): void {
     const dialogRef = this.dialog.open(PortalInfoDialogComponent, {
       width: '500px',
-      height: '500px',
+      height: '300px',
       data: dialogData
     });
 
@@ -334,6 +336,21 @@ export class PixrComponent implements OnInit {
     });
   }
 
+  openMapDialog(dialogData: DialogData): void {
+    const dialogRef = this.dialog.open(MapDialogComponent, {
+      width: '600px',
+      height: '600px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('Return Value: ' + JSON.stringify(result));
+      } else {
+        console.log('dialogRef.afterClosed NO Data');
+      }
+    });
+  }
 }
 
 @Component({

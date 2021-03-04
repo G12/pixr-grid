@@ -8,21 +8,32 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MaterialModule} from './modules/material.module';
 import {PixrComponent, PortalInfoDialogComponent} from './pixr/pixr.component';
 import {FormsModule} from '@angular/forms';
+import { MapDialogComponent } from './dialogs/map/map-dialog.component';
+import {MapComponent} from './map/map.component';
+// import {AgmCoreModule} from '@agm/core';
 
 @NgModule({
   declarations: [
     AppComponent,
     PixrComponent,
-    PortalInfoDialogComponent
+    PortalInfoDialogComponent,
+    MapDialogComponent,
+    MapComponent
   ],
   imports: [
     BrowserModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     BrowserAnimationsModule,
     MaterialModule,
-    FormsModule
+    FormsModule,
+    // AgmCoreModule.forRoot({
+    //  apiKey: environment.googleMapsApiKey,
+    //  libraries: ['geometry']
+    // }),
   ],
-  entryComponents: [PortalInfoDialogComponent],
+  entryComponents: [
+    PortalInfoDialogComponent,
+    MapDialogComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
