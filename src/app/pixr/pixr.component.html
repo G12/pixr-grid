@@ -33,7 +33,7 @@
     <div *ngIf="canvas">
       <div class="column" [style.width.px]="column.width"
            *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
-        {{column.name}}
+        {{column.name}} selected Portals: {{column.portals.length}}
       </div>
     </div>
   </div>

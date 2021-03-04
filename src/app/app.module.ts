@@ -22,7 +22,7 @@ import {FormsModule} from '@angular/forms';
     MaterialModule,
     FormsModule
   ],
-  providers: [],
+  entryComponents: [PortalInfoDialogComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

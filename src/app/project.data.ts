@@ -5,6 +5,10 @@ export interface PortalRec {
   t: number;
   r: number;
   b: number;
+  status?: string;
+  name?: string;
+  url?: string;
+  user?: string;
 }
 
 export interface Column{
@@ -16,8 +20,8 @@ export interface Column{
 
 export interface RawData {
   id?: string;
-  name: string;
-  columns: Column[];
+  name?: string;
+  columns?: Column[];
 }
 
 export interface PortalData {
@@ -87,4 +91,7 @@ export interface IngressNameData {
 export interface DialogData {
   name: string;
   url: string;
+  rawData: RawData;
+  col: Column;
+  portal: PortalRec;
 }

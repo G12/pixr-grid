@@ -1,10 +1,11 @@
 import {Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {Column, DialogData, FirstSatProject, IngressNameData, PortalRec, RawData} from '../project.data';
-import {AngularFirestoreDocument} from '@angular/fire/firestore';
+import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-pixr',
@@ -37,6 +38,7 @@ export class PixrComponent implements OnInit {
   rawDataDoc: AngularFirestoreDocument;
   firstSatProject: FirstSatProject;
   rawData: RawData;
+  rawDataSubscription: Subscription;
 
   // Banner Info
   bannerInfo = '  @ anonymous arrived!';
@@ -46,13 +48,12 @@ export class PixrComponent implements OnInit {
   allIngressNames: IngressNameData[];
   private busy = false;
 
-  dialogData: DialogData = {name: '', url: ''};
+  dialogData: DialogData = {name: '', url: '', col: null, portal: null, rawData: null};
 
   constructor(public authService: AuthService,
               private projectService: ProjectService,
               private usersService: UsersService,
               public dialog: MatDialog) {
-
     this.rawData = {id: '', name: '', columns: []};
   }
 
@@ -63,8 +64,22 @@ export class PixrComponent implements OnInit {
     this.bannerWidth = (
       window.innerWidth - this.bannerLeftMargin - this.logoutButtonWidth);
   }
+  /*
+  snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                console.log("New city: ", change.doc.data());
+            }
+            if (change.type === "modified") {
+                console.log("Modified city: ", change.doc.data());
+            }
+            if (change.type === "removed") {
+                console.log("Removed city: ", change.doc.data());
+            }
+        });
+   */
 
   ///////////////  initialization helper methods //////////////////////
+
   subscribeToFirstSaturdayProj(id): void {
     this.firstSatProjectDoc = this.projectService.getfirstSatProjectDocRef(id);
     this.firstSatProjectDoc.get().subscribe(doc => {
@@ -83,10 +98,12 @@ export class PixrComponent implements OnInit {
 
   subscribeToRawdataFor(id: string): void {
     this.rawDataDoc = this.projectService.getRawDataDocRef(id);
-    this.rawDataDoc.get().subscribe(doc => {
+    this.rawDataSubscription = this.rawDataDoc.get().subscribe(doc => {
       if (doc.exists) {
-        console.log('defaultRawData: ' + JSON.stringify(doc.data()));
+        // console.log('defaultRawData: ' + JSON.stringify(doc.data()));
         this.rawData = doc.data() as RawData;
+        console.log('subscribeToRawdataFor ' + this.rawData.name);
+        this.drawPortalFrames();
       } else {
         // doc.data() will be undefined in this case
         console.log('No rawDataDocRef!');
@@ -104,7 +121,7 @@ export class PixrComponent implements OnInit {
           ...e.payload.doc.data()
         } as string[];
       });
-      console.log(this.allIngressNames);
+      console.log('User List: ' + JSON.stringify(this.allIngressNames));
     });
   }
 
@@ -126,8 +143,6 @@ export class PixrComponent implements OnInit {
         console.log('No projectService.userBootParamDocRef!');
       }
     });
-
-
   }
 
   initCanvas(): void {
@@ -154,29 +169,54 @@ export class PixrComponent implements OnInit {
     this.img.src = this.imgUrl;
   }
 
-  /*
-  getDimensions(src): void{
-    if (!this.img) {
-      this.initImage(src);
-    }
-    this.img.onload = () => {
-      console.log('Width: ' + this.img.width + ' Height: ' + this.img.height);
-    };
-    this.img.onError = () => {
-      console.log('Error loading image: ' + src);
-    };
-  }
-   */
-
   drawCanvas(): void {
     this.initCanvas();
   }
 
+  drawPortalFrames(): void {
+
+    if (this.ctx && this.rawData.columns) {
+      this.rawDataDoc.get().subscribe(value => {
+        this.rawData = value.data() as RawData;
+        this.rawData.columns.forEach((column: Column) => {
+          column.portals.forEach((portal: PortalRec) => {
+            if (portal.status && portal.status === '1') {
+              this.drawFrame(portal, '#FFFFFF', 3);
+            }
+          });
+        });
+      });
+      /*
+      this.rawData.columns.forEach((column: Column) => {
+        column.portals.forEach((portal: PortalRec) => {
+          if (portal.status && portal.status === '1') {
+            this.drawFrame(portal, '#FFFFFF', 3);
+          }
+        });
+      });
+       */
+    }
+  }
+
+  getLatestRawData(): void {
+    this.rawDataDoc.get().subscribe(doc => {
+      if (doc.exists) {
+        console.log('defaultRawData: ' + JSON.stringify(doc.data()));
+        this.rawData = doc.data() as RawData;
+        return true;
+        // this.drawPortalFrames();
+      } else {
+        // doc.data() will be undefined in this case
+        console.log('No rawDataDocRef!');
+        return false;
+      }
+    });
+  }
+
   /// Mouse Events ( after canvas initialized
   handleMouseDown(e): void {
-    if (!this.busy){
+    if (!this.busy) {
       this.busy = true;
-      const rect = this.canvas.getBoundingClientRect();
       const xy = this.getXY(e);
       const x = xy[0];
       const y = xy[1];
@@ -186,8 +226,15 @@ export class PixrComponent implements OnInit {
           col.portals.forEach(pr => {
             if ((y > pr.t && y < (pr.b + pr.t)) && (x < (pr.r + pr.l) && x > pr.l)) {
               // alert('FOUND: top:' + pr.t + ' bottom:' + pr.b + ' Column: ' + pr.colName);
-
-              this.drawFrame(pr, '#ffcc00', 4);
+              this.dialogData = {
+                name: '',
+                url: '',
+                rawData: this.rawData,
+                col,
+                portal: pr
+              };
+              this.openPortalDialog(this.dialogData); // send event to open dialog ???
+              // this.drawFrame(pr, '#ffcc00', 4);
               this.busy = false;
               return;
             }
@@ -198,26 +245,14 @@ export class PixrComponent implements OnInit {
     this.busy = false;
   }
 
-  openDialog(): void {
-    const dialogRef = this.dialog.open(PortalInfoDialogComponent, {
-      width: '250px',
-      data: {name: this.dialogData.name, animal: this.dialogData.url}
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-      this.dialogData = result;
-    });
-  }
-
-  drawFrame(p: PortalRec, color: string, lineWidth: number): void{
+  drawFrame(p: PortalRec, color: string, lineWidth: number): void {
     this.ctx.strokeStyle = color; // '#FFFFFF';
     this.ctx.lineWidth = lineWidth;
     this.ctx.strokeRect(p.l, p.t, p.r, p.b);
     // this.drawShadow(p, lineWidth); // TODO shadow wont work here
   }
 
-  drawShadow(p: PortalRec, lw: number): void{
+  drawShadow(p: PortalRec, lw: number): void {
     // canvas.strokeStyle = "rgba("+r+","+g+","+b+","+alpha+")"; TODO control opacity
     this.ctx.strokeStyle = '#000000';
     const lineWidth = 10;
@@ -234,7 +269,6 @@ export class PixrComponent implements OnInit {
   private getXY(event: MouseEvent): any {
     // this.imgData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     const rect = this.canvas.getBoundingClientRect();
-    const left = event.clientX - rect.left; //  - this.currentColumn.width; // TODO fix Hack job
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     return [x, y];
@@ -248,6 +282,7 @@ export class PixrComponent implements OnInit {
       this.expandMe = false;
       this.drawCanvas();
       this.bannerInfo = '  @ ' + name + ' started working!' + this.bannerInfo;
+      this.drawPortalFrames();
     }
   }
 
@@ -272,8 +307,33 @@ export class PixrComponent implements OnInit {
   }
 
   showColumnInfo(column: Column): void {
-    alert(column.name + ' has ' + column.portals.length + ' portals');
+    alert('open Column Info dialog');
+    this.drawPortalFrames();
   }
+
+  openPortalDialog(dialogData: DialogData): void {
+    const dialogRef = this.dialog.open(PortalInfoDialogComponent, {
+      width: '500px',
+      height: '500px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('');
+      if (result) {
+        const dat = result as DialogData;
+        dat.portal.status = '1'; // TODO make a static constant for this
+        // console.log('dialogRef.afterClosed url: ' + dat.portal.url);
+        this.rawDataDoc.update(this.rawData).then(value => {
+          console.log('Updated rawData.name: ' + this.rawData.name);
+          this.drawPortalFrames();
+        });
+      } else {
+        console.log('dialogRef.afterClosed NO Data');
+      }
+    });
+  }
+
 }
 
 @Component({
@@ -284,9 +344,21 @@ export class PortalInfoDialogComponent {
 
   constructor(
     public dialogRef: MatDialogRef<PortalInfoDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+    @Inject(MAT_DIALOG_DATA) public data: DialogData) {
+  }
 
-  onNoClick(): void {
+  onCancelClick(): void {
+    console.log('Dialog Closed');
+    this.dialogRef.close();
+  }
+
+  // TODO this is not usefull right now could be usefull for standalone dialog component
+  onSaveClick(data: DialogData): void {
+    if (data) {
+      console.log('Save Portal Data click data url' + data.portal.url);
+    } else {
+      console.log('Save Portal Data returns NO DATA');
+    }
     this.dialogRef.close();
   }
 }

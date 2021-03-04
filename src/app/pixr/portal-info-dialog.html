@@ -1,14 +1,26 @@
-<h1 mat-dialog-title>Hi {{data.name}}</h1>
+<h1 mat-dialog-title>Column {{data.col.name}}</h1>
 <div mat-dialog-content>
-  <p>What's your favorite animal?</p>
-  <mat-form-field>
+  <p>Enter portal information for portal top: {{data.portal.l}}</p>
+  <div>
+  <mat-form-field [style.width.%]="90">
     <mat-label>Portal Name</mat-label>
-    <input matInput [(ngModel)]="data.name">
-    <mat-label>Portal Location</mat-label>
-    <input matInput [(ngModel)]="data.url">
+    <input matInput [(ngModel)]="data.portal.name">
   </mat-form-field>
+  </div>
+  <div>
+  <mat-form-field [style.width.%]="90">
+    <mat-label>Portal Location</mat-label>
+    <input matInput [(ngModel)]="data.portal.url">
+  </mat-form-field>
+  </div>
 </div>
-<div mat-dialog-actions>
-  <button mat-button (click)="onNoClick()">No Thanks</button>
-  <button mat-button [mat-dialog-close]="data" cdkFocusInitial>Ok</button>
+<!--
+<div mat-dialog-actions align="start">
+  <button mat-button (click)="onNoClick()"></button>
+</div>
+-->
+<div mat-dialog-actions align="end">
+  <button mat-button [mat-dialog-close]="data">Save Portal Data</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+  <!--<button mat-button (click)="onSaveClick(data)">Save Click</button>-->
 </div>
