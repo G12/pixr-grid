@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BootParam, FirstSatProject, PortalData, ProjectUser, RawData} from '../project.data';
+import {BootParam, FirstSatProject, ProjectUser, RawData} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';

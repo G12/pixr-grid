@@ -6,41 +6,37 @@
 </button>
 <div class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">{{bannerInfo}}</div>
 <div class="container">
-<mat-expansion-panel (opened)="panelOpenState = true"
-                     (closed)="panelOpenState = false"
-                     [expanded]="expandMe">
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
-    </mat-panel-title>
-  </mat-expansion-panel-header>
-  <div *ngIf="!canvas; else Content" class="example-button-row">
-    <h1 *ngIf="firstSatProject">{{firstSatProject.name}}</h1>
-    <button mat-raised-button color="primary"
-            (click)="setIngressName()">
-      To continue Enter Ingress Name
-    </button>
-  </div>
-  <ng-template #Content>
-  <div class="content">
-    <h1>Tap on a Portal Image: enter Portal Name and Location </h1>
-  </div>
-  </ng-template>
-</mat-expansion-panel>
+  <mat-expansion-panel (opened)="panelOpenState = true"
+                       (closed)="panelOpenState = false"
+                       [expanded]="expandMe">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div *ngIf="!canvas; else Content" class="example-button-row">
+      <h1 *ngIf="firstSatProject">{{firstSatProject.name}}</h1>
+      <button mat-raised-button color="primary"
+              (click)="setIngressName()">
+        To continue Enter Ingress Name
+      </button>
+    </div>
+    <ng-template #Content>
+      <div class="content">
+        <h1>Tap on a Portal Image: enter Portal Name and Location </h1>
+      </div>
+    </ng-template>
+  </mat-expansion-panel>
 
-<div>
-  <div class="header" [style.width.px]="width">
-    <div *ngIf="canvas">
-      <div class="column" [style.width.px]="column.width"
-           *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
-        {{column.name}} selected Portals: {{column.portals.length}}
+  <div>
+    <div class="header" [style.width.px]="width">
+      <div *ngIf="canvas">
+        <div class="column" [style.width.px]="column.width"
+             *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
+          {{column.name}} selected Portals: {{column.portals.length}}
+        </div>
       </div>
     </div>
+    <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
   </div>
-  <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
-</div>
-</div>
-<div>
-  <h1>Hello Map</h1>
-  <app-map></app-map>
 </div>

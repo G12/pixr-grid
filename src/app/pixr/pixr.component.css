@@ -78,3 +78,13 @@
 .wrapper {
   overflow: hidden;
 }
+
+/* Dialog Box  */
+.anchor{
+  cursor: pointer;
+  color: blue;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}

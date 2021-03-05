@@ -1,13 +1,26 @@
+export class App {
+  public static P_EMPTY = -1;
+  public static P_FULL = 1;
+  public static P_NO_URL = 2;
+  public static P_NO_NAME = 3;
+}
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
 
 export interface PortalRec {
+  index: number;
   colName: string;
   l: number;
   t: number;
   r: number;
   b: number;
-  status?: string;
+  status?: number;
   name?: string;
   url?: string;
+  latLng?: LatLng;
   user?: string;
 }
 
@@ -24,6 +37,7 @@ export interface RawData {
   columns?: Column[];
 }
 
+// TODO columnCollection is no longer used - remove these items globally and test when time allows
 export interface PortalData {
   colName: string;
   x: number;
