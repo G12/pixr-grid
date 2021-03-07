@@ -1,9 +1,11 @@
+/*
 export class App {
   public static P_EMPTY = -1;
   public static P_FULL = 1;
   public static P_NO_URL = 2;
   public static P_NO_NAME = 3;
 }
+*/
 
 export interface LatLng {
   lat: number;
@@ -13,10 +15,10 @@ export interface LatLng {
 export interface PortalRec {
   index: number;
   colName: string;
-  l: number;
-  t: number;
-  r: number;
-  b: number;
+  l?: number;
+  t?: number;
+  r?: number;
+  b?: number;
   status?: number;
   name?: string;
   url?: string;
@@ -34,8 +36,14 @@ export interface Column{
 export interface RawData {
   id?: string;
   name?: string;
+  imgUrl?: string;
+  srcHeight?: number;
+  srcWidth?: number;
+  displayWidth?: number;
+  displayHeight?: number;
   columns?: Column[];
 }
+
 
 // TODO columnCollection is no longer used - remove these items globally and test when time allows
 export interface PortalData {
@@ -90,6 +98,7 @@ export interface FirstSatProject {
 export interface BootParam {
   id?: string;
   project_id?: string;
+  portalCollectionName?: string;
   admin_list?: string[];
 }
 
@@ -107,5 +116,11 @@ export interface DialogData {
   url: string;
   rawData: RawData;
   col: Column;
+  latLng: LatLng;
   portal: PortalRec;
+}
+
+export interface ColumnRecData {
+  column: Column;
+  portalRecs: PortalRec[];
 }

@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BootParam, FirstSatProject, ProjectUser, RawData} from '../project.data';
+import {BootParam, FirstSatProject, PortalRec, ProjectUser, RawData} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
@@ -50,6 +50,15 @@ export class ProjectService {
     this.adminBootParamDocRef = this.firestore.collection('fs_boot_params').doc('fs_admin');
     ///////////////////////////   Boot Up  //////////////////////////
 
+  }
+
+  //////////////////////////// PortalRecCollection  /////////////////////
+  getPortalRecs(path: string): any{
+    return this.firestore.collection(path).snapshotChanges();
+  }
+
+  setPortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
+    this.firestore.collection(rawDatId).doc(path).set(portalRec);
   }
 
   getfirstSatProjectDocRef(projectId): AngularFirestoreDocument{

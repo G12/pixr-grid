@@ -33,7 +33,10 @@
       <div *ngIf="canvas">
         <div class="column" [style.width.px]="column.width"
              *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
-          {{column.name}} selected Portals: {{column.portals.length}}
+          <h1>Column {{column.name}}</h1>
+          <p>Click on image below.</p>
+          <p>Enter portal url.</p>
+          <p>Click "here" to see Map.</p>
         </div>
       </div>
     </div>
