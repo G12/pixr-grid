@@ -1,6 +1,17 @@
 import {Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
-import {BootParam, Column, ColumnRecData, FirstSatProject, IngressNameData, LatLng, PortalRec, RawData} from '../project.data';
+import {
+  BootParam,
+  Column,
+  ColumnRecData,
+  FirstSatProject,
+  IngressNameData,
+  LatLng,
+  Messages,
+  MsgDat,
+  PortalRec,
+  RawData
+} from '../project.data';
 import {AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
@@ -48,6 +59,8 @@ export class PixrComponent implements OnInit {
   rawData: RawData;
   rawDataSubscription: Subscription;
   portalRecs: PortalRec[];
+  logMessages: Messages;
+  logMsgArray: MsgDat[];
 
   // Banner Info
   bannerInfo = '  @ anonymous arrived!';
@@ -95,6 +108,12 @@ export class PixrComponent implements OnInit {
               ...e.payload.doc.data()
             } as PortalRec;
           });
+          this.projectService.getMsgLog(id).get().subscribe(doc2 => {
+            if (doc2.exists){
+              this.logMessages = doc2.data() as Messages;
+              this.logMsgArray = this.logMessages.messages;
+            }
+          });
           this.ingressNamesDoc = this.usersService.getUserDocs().subscribe(dat => {
             this.allIngressNames = dat.map(e => {
               return {
@@ -102,15 +121,12 @@ export class PixrComponent implements OnInit {
                 ...e.payload.doc.data()
               } as string[];
             });
-            console.log('INITIALIZE IMAGE NOW');
             this.initImage(this.imgUrl);
             this.drawPortalFrames();
           });
-          console.log('subscribeToRawdataFor ' + this.rawData.name);
         });
       } else {
         // doc.data() will be undefined in this case
-        console.log('No rawDataDocRef!');
       }
     });
   }
@@ -121,7 +137,6 @@ export class PixrComponent implements OnInit {
     // Get BootParam for fs_user then subscribe to default FirstSaturdayProj
     this.projectService.userBootParamDocRef.get().subscribe(data => {
       if (data.exists) {
-        console.log('BootParam for fs_user: ' + JSON.stringify(data.data()));
         const userBootParam = data.data() as BootParam;
         const id = userBootParam.project_id;
         // const portalsCollectionName = userBootParam.portalCollectionName;
@@ -130,7 +145,6 @@ export class PixrComponent implements OnInit {
         this.subscribeToRawdataFor(id);
       } else {
         // doc.data() will be undefined in this case
-        console.log('No projectService.userBootParamDocRef!');
       }
     });
   }
@@ -203,11 +217,19 @@ export class PixrComponent implements OnInit {
     // Once we have the new collection search for incoming rec if found update else add
     const path = prtl.colName + ':' + prtl.index;
     const test: PortalRec = this.portalRecs.find(p => (p.colName === prtl.colName && p.index === prtl.index));
+    let msg = this.ingressName;
     if (test) {
+      if (test.latLng) {
+        msg = msg + ' Updated ';
+      } else { // Erasing record
+        msg = msg + ' Erased ';
+      }
       this.projectService.updatePortalRec(this.rawData.id, path, prtl);
     } else {
+      msg = msg + ' Discovered ';
       this.projectService.setPortalRec(this.rawData.id, path, prtl);
     }
+    this.projectService.setLogMsg(this.rawData.id, msg + ' ' + path);
     this.drawPortalFrame(prtl);
   }
 
@@ -244,8 +266,6 @@ export class PixrComponent implements OnInit {
         return true;
         // this.drawPortalFrames();
       } else {
-        // doc.data() will be undefined in this case
-        console.log('No rawDataDocRef!');
         return false;
       }
     });
@@ -273,7 +293,9 @@ export class PixrComponent implements OnInit {
                 latLng = prtl.latLng;
               }
               const dlgData: PortalRec = {
+                rawDataId: this.rawData.id,
                 colName: column.name,
+                user: this.ingressName,
                 index: pr.index, l: pr.l, r: pr.r, t: pr.t, b: pr.b,
                 name,
                 url,
@@ -281,22 +303,31 @@ export class PixrComponent implements OnInit {
               };
               let canOpen = true;
               if (this.projectService.clipboard && !latLng) {
-                if (confirm('Do you want to PASTE:' + this.projectService.clipboard.name + ' here'))
+                const src = this.projectService.clipboard.colName + ':' +
+                  this.projectService.clipboard.index;
+                const dest = dlgData.colName + ':' + dlgData.index;
+                if (confirm('Do you want to PASTE:' + src + ' to ' + dest))
                 {
                   canOpen = false;
                   dlgData.url = this.projectService.clipboard.url;
                   dlgData.latLng = this.projectService.clipboard.latLng;
                   dlgData.status = this.P_FULL;
                   // TODO At this point we can do auto paste;
+                  // this.projectService.setLogMsg(this.rawData.id,
+                  //  this.ingressName + ' discovered ' + dlgData.colName + ':' + dlgData.index);
                   this.projectService.setPortalRec(this.rawData.id, path, dlgData);
                   this.updatePortalRecs(dlgData);
                   // alert('AUTO UPDATING portal data - frame will be drawn white');
+                  this.projectService.setLogMsg(
+                    this.rawData.id, this.ingressName + ' Pasted ' + src + ' to ' + dest);
                 } else {
                   canOpen = true;
                 }
               }
               if (canOpen) {
                 dlgData.msg = ''; // use msg to comunicate info within the dialog
+                dlgData.rawDataId = this.rawData.id;
+                dlgData.user = this.ingressName;
                 this.openPortalDialog(dlgData); // send event to open dialog ???
                 this.busy = false;
               }
@@ -346,8 +377,9 @@ export class PixrComponent implements OnInit {
       this.expandMe = false;
       this.drawCanvas();
       this.bannerInfo = '  @ ' + name + ' started working!' + this.bannerInfo;
-      // TODO integrate portalRec docs into drawing frames
-      // this.drawPortalFrames();
+      if (this.rawData) {
+        this.projectService.setLogMsg( this.rawData.id, this.ingressName + ' Logged In');
+      }
     }
   }
 
@@ -369,13 +401,6 @@ export class PixrComponent implements OnInit {
       this.bannerInfo = '  @ ' + this.SavedIngressName + ' did something and then some more and then a whole lot of nothing '
         + this.bannerInfo;
     }
-  }
-
-  getLocationArrayForUrls(column: Column): [] {
-    column.portals.forEach(portal => {
-      console.log(portal.url);
-    });
-    return [];
   }
 
   showColumnInfo(column: Column): void {
@@ -405,8 +430,6 @@ export class PixrComponent implements OnInit {
     });
 
     this.portalDialogRef.afterClosed().subscribe(result => {
-
-      console.log('Dialog closed got result: ' + JSON.stringify(result));
 
       if (result) {
         let status = 0;
@@ -439,25 +462,25 @@ export class PixrComponent implements OnInit {
         let prtl: PortalRec = this.portalRecs.find(p => p.index === dat.index && p.colName === dat.colName);
         if (!prtl) {
           prtl = {
+            rawDataId: this.rawData.id,
             index: dat.index,
+            user: this.ingressName,
             colName: dat.colName, l: dat.l, r: dat.r, t: dat.t, b: dat.b,
             status,
             name: dat.name,
             url: dat.url,
             latLng: dat.latLng,
           };
-          console.log('NOT found then prtl:' + JSON.stringify(prtl));
         } else {
+          prtl.user = dat.user;
           prtl.name = dat.name;
           prtl.latLng = dat.latLng;
           prtl.url = dat.url;
           prtl.status = status;
-          console.log('FOUND then prtl:' + JSON.stringify(prtl));
         }
         this.projectService.setPortalRec(this.rawData.id, path, prtl);
         this.updatePortalRecs(prtl);
       } else {
-        console.log('dialogRef.afterClosed NO Data');
       }
     });
   }
@@ -471,9 +494,7 @@ export class PixrComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        console.log('Return Value: ' + JSON.stringify(result));
       } else {
-        console.log('dialogRef.afterClosed NO Data');
       }
     });
   }
@@ -483,13 +504,10 @@ export class PixrComponent implements OnInit {
       const arr = url.split('?');
       const paramsString = arr[1];
       const searchParams = new URLSearchParams(paramsString);
-      console.log('paramsString ' + paramsString + ' latlng: ' + searchParams.get('ll'));
       const ll = searchParams.get('ll');
       if (ll) {
         const arr2 = ll.split(',');
-        const latlng: LatLng = {lat: parseFloat(arr2[0]), lng: parseFloat(arr2[1])};
-        console.log('LatLng: ' + JSON.stringify(latlng));
-        return latlng;
+        return {lat: parseFloat(arr2[0]), lng: parseFloat(arr2[1])};
       }
     }
     return null;
@@ -507,7 +525,6 @@ export class PortalInfoDialogComponent {
   }
 
   onCancelClick(): void {
-    console.log('Dialog Closed');
     this.dialogRef.close();
   }
 
@@ -522,7 +539,6 @@ export class PortalInfoDialogComponent {
         alert(data.url + ' is not a valid intel url');
       }
     } else {
-      console.log('Save Portal Data returns NO DATA');
     }
   }
 
@@ -535,9 +551,7 @@ export class PortalInfoDialogComponent {
   }
 
   validateUrl(url: string, data: PortalRec): void {
-    console.log(url);
     if (this.isValidURL(url)) {
-      console.log('VALID URL: ' + url);
       this.dialogRef.close(data);
     } else {
       data.msg = 'Not a Valid intel URL!';
@@ -546,6 +560,8 @@ export class PortalInfoDialogComponent {
 
   eraseData(data: PortalRec): void {
     if (confirm('Do you really wan to ERASE?')) {
+      const msg = data.user + ' Erased ' + data.colName + ':' + data.index;
+      this.projectService.setLogMsg(data.rawDataId, msg);
       data.latLng = null;
       data.url = '';
       this.dialogRef.close(data);
@@ -553,6 +569,8 @@ export class PortalInfoDialogComponent {
   }
 
   setClipboard(data: PortalRec): void {
+    this.projectService.clipboard = data;
+    /*
     const name = prompt('Enter a name to identify clipboard object', '');
     if (name !== '') {
       data.name = name;
@@ -560,6 +578,14 @@ export class PortalInfoDialogComponent {
       console.log('Clipboard: ' + this.projectService.clipboard);
     }else{
       alert('A name is required to identify the object you wish to paste!');
+    }*/
+  }
+
+  clearAllMessages(data: PortalRec): void {
+    if (data.user === 'G12mo'){
+      if (confirm('CLEAR_ALL_MESSAGES')){
+        this.projectService.setLogMsg(data.rawDataId, 'CLEAR_ALL_MESSAGES');
+      }
     }
   }
 }

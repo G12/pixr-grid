@@ -14,7 +14,6 @@ export class MapDialogComponent {
   }
 
    onCancelClick(): void {
-    console.log('Dialog Closed');
     this.dialogRef.close();
   }
 }

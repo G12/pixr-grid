@@ -2,6 +2,9 @@
 <div mat-dialog-actions align="end">
   <button *ngIf="data.latLng" mat-raised-button color="warn"
           (click)="eraseData(data)">ERASE</button>
+  <!--CLEAR_ALL_MESSAGES-->
+  <button *ngIf="data.user === 'G12mo'" mat-raised-button color="warn"
+          (click)="clearAllMessages(data)">CLEAR_ALL_MESSAGES</button>
   <button *ngIf="projectService.clipboard" (click)="projectService.clipboard = null">
       Clear Clipboard
   </button>

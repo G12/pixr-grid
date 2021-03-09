@@ -1,13 +1,27 @@
-/*
-export interface DialogData {
-  id: string;
-  name: string;
-  url: string;
-  columnName: string;
-  latLng: LatLng;
-  portalIndex: number;
+/* firestor document */
+export interface Messages {
+  id?: string;
+  messages: MsgDat[];
 }
- */
+
+export interface MsgDat {
+  msg: string;
+  time: string;
+}
+
+export interface CharDat{
+  char: string;
+  uuid: string;
+  time: string;
+}
+
+/* firestore document */
+export interface Char {
+  id: string; // unique identifier Char: then column names A to P...
+  final: CharDat;
+  guesses: CharDat[];
+}
+
 
 export interface ColumnRecData {
   column: Column;
@@ -19,9 +33,13 @@ export interface LatLng {
   lng: number;
 }
 
+/* A firestore Document */
 export interface PortalRec {
+  id?: string;
   index: number;
   colName: string;
+  rawDataId: string;
+  user: string;
   l: number;
   t: number;
   r: number;
@@ -30,7 +48,6 @@ export interface PortalRec {
   name?: string;
   url?: string;
   latLng?: LatLng;
-  user?: string;
   msg?: string;
 }
 

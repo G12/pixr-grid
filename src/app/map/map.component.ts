@@ -1,6 +1,5 @@
 import {AfterViewInit, Component, Input, ViewChild} from '@angular/core';
 import {ColumnRecData} from '../project.data';
-import {ProjectService} from '../services/project.service';
 import {} from 'googlemaps';
 import LatLng = google.maps.LatLng;
 
@@ -49,7 +48,6 @@ export class MapComponent implements AfterViewInit {
         });
         marker.setMap(this.map);
         const diff = this.lastIndex ? prtl.index - this.lastIndex : 0;
-        console.log('prtl.index ' + prtl.index + ' - lastIndex ' + this.lastIndex + ' = ' + diff);
         if (diff === 1) {
           // draw a line back to it
           const portalCoordinates = [

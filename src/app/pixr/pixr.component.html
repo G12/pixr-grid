@@ -4,7 +4,9 @@
         (click)="logout()">
   <mat-icon>logout</mat-icon>
 </button>
-<div class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">{{bannerInfo}}</div>
+
+<div class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">banner messages</div>
+
 <div class="container">
   <mat-expansion-panel (opened)="panelOpenState = true"
                        (closed)="panelOpenState = false"
@@ -42,4 +44,7 @@
     </div>
     <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
   </div>
+</div>
+<div>
+  <div *ngFor="let msgDat of logMsgArray">{{msgDat.msg}}</div>
 </div>

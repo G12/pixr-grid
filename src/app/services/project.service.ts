@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BootParam, FirstSatProject, IngressNameData, PortalRec, ProjectUser, RawData} from '../project.data';
+import {BootParam, FirstSatProject, IngressNameData, PortalRec, ProjectUser, RawData, Messages} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
@@ -58,6 +58,30 @@ export class ProjectService {
     this.firestore.collection('ingress_names').add(data);
   }
 
+  ////////////////// disparate PortalRecCollection objects //////////////
+
+  setLogMsg(rawDatId: string, msg: string): void{
+    this.firestore.collection(rawDatId).doc('_MsgLog').get().subscribe(document => {
+      const d = new Date();
+      const time = JSON.stringify(d);
+      const msgDat = {msg, time};
+      let messagesDoc: Messages;
+      if (msg === 'CLEAR_ALL_MESSAGES') {
+        messagesDoc = {messages: []};
+      } else if (document.exists){
+        messagesDoc = document.data() as Messages;
+      } else {
+        messagesDoc = {messages: []};
+      }
+      messagesDoc.messages.push(msgDat);
+      this.firestore.collection(rawDatId).doc('_MsgLog').set(messagesDoc).then(doc => {
+        // console.log('setLogMsg return value: ' + JSON.stringify(doc));
+      }).catch(reason => {
+        console.log('setLogMsg ERROR reason: ' + JSON.stringify(reason));
+      });
+    });
+  }
+
   //////////////////////////// PortalRecCollection  /////////////////////
   updatePortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
     this.firestore.collection(rawDatId).doc(path).update(portalRec);
@@ -69,16 +93,24 @@ export class ProjectService {
 
   setPortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
     this.firestore.collection(rawDatId).doc(path).set(portalRec).then(value => {
-      console.log('setportal return value: ' + JSON.stringify(value));
+      // console.log('setportal return value: ' + JSON.stringify(value));
     }).catch(reason => {
       console.log('setPortal ERROR reason: ' + JSON.stringify(reason));
     });
   }
 
-  getfirstSatProjectDocRef(projectId): AngularFirestoreDocument{
+  getMsgLog(rawDatId: string): AngularFirestoreDocument{
+    return this.firestore.collection(rawDatId).doc('_MsgLog');
+    // this.rawDataDocRef = this.firestore.collection(rawDatId).doc('_MsgLog');
+    // return this.rawDataDocRef;
+  }
+
+
+  /* getfirstSatProjectDocRef(projectId): AngularFirestoreDocument{
     this.firstSatProjectDocRef = this.firestore.collection('first_sat_projects').doc(projectId);
     return this.firstSatProjectDocRef;
   }
+   */
 
   getRawDataDocRef(projectId): AngularFirestoreDocument{
     this.rawDataDocRef = this.firestore.collection('raw_data_projects').doc(projectId);
@@ -89,14 +121,10 @@ export class ProjectService {
 
   addProject(project: FirstSatProject): void {
     this.firestore.collection('first_sat_projects').add(project).then((docref) => {
-      console.log('addProject docref: ');
-      console.log(docref);
       this.projectId = docref.id;
       this.firestore.collection('project_ids').doc(docref.id).set(
         {name: project.name, type: 'first_sat', date: project.date})
         .then(ref => {
-          console.log(project.name + ' name added ref value below:');
-          console.log(ref);
         }).catch(reason => {
         console.log('project_ids set ERROR:');
         console.log(reason);
@@ -149,8 +177,6 @@ export class ProjectService {
 
   addRawDataProject(rawData: RawData): void {
     this.firestore.collection('raw_data_projects').add(rawData).then((docref) => {
-      console.log('addProject docref: ');
-      console.log(docref);
       this.rawDataId = docref.id;
       rawData.id = docref.id;
       this.updateRawDataProject(rawData);

@@ -45,7 +45,6 @@ export class AuthService {
 
   get isLoggedIn(): boolean {
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('is LoggedIn user: ' + JSON.stringify(user));
     return user !== null;
   }
 
@@ -73,16 +72,13 @@ export class AuthService {
   }
 
   async logout(): Promise<any> {
-    console.log('Await Sign Out');
     await this.afAuth.signOut().then(() => {
-      console.log('Logged Out');
       localStorage.removeItem('user');
     });
   }
 
   async loginWithGoogle(): Promise<any> {
     this.afAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then((user) => {
-      console.log(user);
       this.err = false;
       if (user) {
         this.user = user.user;
