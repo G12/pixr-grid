@@ -15,8 +15,8 @@
       </mat-panel-title>
     </mat-expansion-panel-header>
     <div *ngIf="!canvas; else Content" class="example-button-row">
-      <h1 *ngIf="firstSatProject">{{firstSatProject.name}}</h1>
-      <button mat-raised-button color="primary"
+      <h1 *ngIf="rawData">{{rawData.name}}</h1>
+      <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
               (click)="setIngressName()">
         To continue Enter Ingress Name
       </button>

@@ -1,0 +1,8 @@
+<!--<h1 *ngIf="dialogData" mat-dialog-title>Column {{dialogData.col.name}}</h1>-->
+<div mat-dialog-content>
+  <app-map *ngIf="columnRecData" [columnRecData]="columnRecData" ></app-map>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancelClick()">Okay</button>
+</div>
+

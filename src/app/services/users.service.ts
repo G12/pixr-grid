@@ -16,12 +16,12 @@ export class UsersService {
   }
 
   updateIngressName(name: string): void {
-    const uid = this.authService.user.uid;
-    const ingNameData: IngressNameData = {id: uid, name};
-    this.firestore.doc('ingress_names/' + uid).update(ingNameData).catch((reason) => {
-      console.log(reason);
+    this.authService.afAuth.currentUser.then(value => {
+      const userUid = value.uid;
+      const ingNameData: IngressNameData = {userUid, name};
+      this.firestore.doc('ingress_names/' + userUid).set(ingNameData).catch((reason) => {
+        console.log(reason);
+      });
     });
   }
-
-
 }

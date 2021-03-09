@@ -21,8 +21,6 @@ export class AuthService {
 
   constructor(public  afAuth: AngularFireAuth) {
     this.subscription = this.afAuth.authState.subscribe(user => {
-      const strUser = JSON.stringify(user.displayName);
-      console.log('afAuth.authState.subscribe: user: firebase.User = ' + strUser);
       this.err = false;
       if (user) {
         this.user = user;

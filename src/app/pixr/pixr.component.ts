@@ -1,6 +1,6 @@
 import {Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
-import {BootParam, Column, ColumnRecData, DialogData, FirstSatProject, IngressNameData, LatLng, PortalRec, RawData} from '../project.data';
+import {BootParam, Column, ColumnRecData, FirstSatProject, IngressNameData, LatLng, PortalRec, RawData} from '../project.data';
 import {AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
@@ -56,8 +56,11 @@ export class PixrComponent implements OnInit {
   ingressNamesDoc: AngularFirestoreDocument;
   allIngressNames: IngressNameData[];
   private busy = false;
+  // private canPaste = true; // TODO dynamically assign this when clipboard is full
+  // clipBoard: PortalRec;
 
-  dialogData: DialogData = {name: '', url: '', latLng: null, col: null, portal: null, rawData: null};
+  // dialogData: DialogData = {id: '', name: '', url: '', latLng: null, columnName: '', portalIndex: null};
+  private portalDialogRef: MatDialogRef<PortalInfoDialogComponent, PortalRec>;
 
   constructor(public authService: AuthService,
               private projectService: ProjectService,
@@ -81,7 +84,6 @@ export class PixrComponent implements OnInit {
     this.rawDataSubscription = this.rawDataDoc.get().subscribe(doc => {
       if (doc.exists) {
         this.rawData = doc.data() as RawData;
-        // alert('src ' + this.rawData.imgUrl);
         this.width = this.rawData.displayWidth;
         this.height = this.rawData.displayHeight;
         this.imgUrl = this.rawData.imgUrl;
@@ -93,7 +95,6 @@ export class PixrComponent implements OnInit {
               ...e.payload.doc.data()
             } as PortalRec;
           });
-          console.log('PortaRecs: ' + JSON.stringify(this.portalRecs));
           this.ingressNamesDoc = this.usersService.getUserDocs().subscribe(dat => {
             this.allIngressNames = dat.map(e => {
               return {
@@ -101,7 +102,6 @@ export class PixrComponent implements OnInit {
                 ...e.payload.doc.data()
               } as string[];
             });
-            console.log('User List: ' + JSON.stringify(this.allIngressNames));
             console.log('INITIALIZE IMAGE NOW');
             this.initImage(this.imgUrl);
             this.drawPortalFrames();
@@ -137,6 +137,42 @@ export class PixrComponent implements OnInit {
 
   initCanvas(): void {
     this.canvas = this.canvasEl.nativeElement;
+    // MOUSE MOVE EVENT
+    this.canvas.addEventListener('mousemove', (event): any => {
+      const xy = this.getXY(event);
+      const x = xy[0];
+      const y = xy[1];
+      let isPortal = false;
+      let canPaste = false;
+      this.rawData.columns.forEach(column => {
+        column.portals.forEach(pr => {
+          if ((y > pr.t && y < (pr.b + pr.t)) && (x < (pr.r + pr.l) && x > pr.l)) {
+            isPortal = true;
+            if (this.projectService.clipboard) {
+              // when the clipboard is full
+              canPaste = true;
+              // but you cannot paste into a loaded portal
+              const pr2 = this.portalRecs.find(p => p.colName === pr.colName && p.index === pr.index);
+              if (pr2) {
+                canPaste = !pr2.latLng;
+              }
+            } else {
+              canPaste = false;
+            }
+          }
+        });
+      });
+      if (isPortal) {
+        if (canPaste) {
+          this.canvasEl.nativeElement.style.cursor = 'cell';
+        } else {
+          this.canvasEl.nativeElement.style.cursor = 'pointer';
+        }
+      } else {
+        this.canvasEl.nativeElement.style.cursor = 'default';
+      }
+    });
+
     // MOUSE DOWN EVENT
     this.canvas.addEventListener('mousedown', (event): any => {
       // TODO
@@ -163,32 +199,39 @@ export class PixrComponent implements OnInit {
     this.initCanvas();
   }
 
+  updatePortalRecs(prtl: PortalRec): void {
+    // Once we have the new collection search for incoming rec if found update else add
+    const path = prtl.colName + ':' + prtl.index;
+    const test: PortalRec = this.portalRecs.find(p => (p.colName === prtl.colName && p.index === prtl.index));
+    if (test) {
+      this.projectService.updatePortalRec(this.rawData.id, path, prtl);
+    } else {
+      this.projectService.setPortalRec(this.rawData.id, path, prtl);
+    }
+    this.drawPortalFrame(prtl);
+  }
+
+  drawPortalFrame(prtl: PortalRec): void {
+    if (prtl.status) {
+      if (prtl.status === this.P_FULL) {
+        this.drawFrame(prtl, '#FFFFFF', 6);
+
+      } else if (prtl.status === this.P_NO_URL ||
+        prtl.status === this.P_NO_NAME) {
+
+        this.drawFrame(prtl, '#999999', 6);
+
+      } else if (prtl.status === this.P_EMPTY) {
+
+        this.drawFrame(prtl, '#333333', 6);
+      }
+    }
+  }
+
   drawPortalFrames(): void {
-
-    if (this.ctx && this.rawData.columns) {
-      this.rawDataDoc.get().subscribe(value => {
-        this.rawData = value.data() as RawData;
-        this.rawData.columns.forEach((column: Column) => {
-          column.portals.forEach((portal: PortalRec) => {
-            const prtl: PortalRec = this.portalRecs.find(p => p.index === portal.index && p.colName === column.name);
-            if (prtl) {
-              if (prtl.status) {
-                if (prtl.status === this.P_FULL) {
-                  this.drawFrame(portal, '#FFFFFF', 6);
-
-                } else if (portal.status === this.P_NO_URL ||
-                  prtl.status === this.P_NO_NAME) {
-
-                  this.drawFrame(portal, '#999999', 6);
-
-                } else if (prtl.status === this.P_EMPTY) {
-
-                  this.drawFrame(portal, '#333333', 6);
-                }
-              }
-            }
-          });
-        });
+    if (this.ctx && this.portalRecs) {
+      this.portalRecs.forEach(prtl => {
+        this.drawPortalFrame(prtl);
       });
     }
   }
@@ -215,31 +258,48 @@ export class PixrComponent implements OnInit {
       const xy = this.getXY(e);
       const x = xy[0];
       const y = xy[1];
-      this.rawData.columns.forEach(col => {
-        if (x > (col.offset - col.width) && x < col.offset) {
-          col.portals.forEach(pr => {
+      this.rawData.columns.forEach(column => {
+        if (x > (column.offset - column.width) && x < column.offset) {
+          column.portals.forEach(pr => {
             if ((y > pr.t && y < (pr.b + pr.t)) && (x < (pr.r + pr.l) && x > pr.l)) {
               let name = '';
               let url = '';
               let latLng = null;
-              const path = col.name + ':' + pr.index;
-              const prtl: PortalRec = this.portalRecs.find(p => p.index === pr.index && p.colName === col.name);
+              const path = column.name + ':' + pr.index;
+              const prtl: PortalRec = this.portalRecs.find(p => p.index === pr.index && p.colName === column.name);
               if (prtl) {
                 name = prtl.name;
                 url = prtl.url;
                 latLng = prtl.latLng;
               }
-              this.dialogData = {
+              const dlgData: PortalRec = {
+                colName: column.name,
+                index: pr.index, l: pr.l, r: pr.r, t: pr.t, b: pr.b,
                 name,
                 url,
                 latLng,
-                rawData: this.rawData,
-                col,
-                portal: pr
               };
-              this.openPortalDialog(this.dialogData); // send event to open dialog ???
-              // this.drawFrame(pr, '#ffcc00', 4);
-              this.busy = false;
+              let canOpen = true;
+              if (this.projectService.clipboard && !latLng) {
+                if (confirm('Do you want to PASTE:' + this.projectService.clipboard.name + ' here'))
+                {
+                  canOpen = false;
+                  dlgData.url = this.projectService.clipboard.url;
+                  dlgData.latLng = this.projectService.clipboard.latLng;
+                  dlgData.status = this.P_FULL;
+                  // TODO At this point we can do auto paste;
+                  this.projectService.setPortalRec(this.rawData.id, path, dlgData);
+                  this.updatePortalRecs(dlgData);
+                  // alert('AUTO UPDATING portal data - frame will be drawn white');
+                } else {
+                  canOpen = true;
+                }
+              }
+              if (canOpen) {
+                dlgData.msg = ''; // use msg to comunicate info within the dialog
+                this.openPortalDialog(dlgData); // send event to open dialog ???
+                this.busy = false;
+              }
               return;
             }
           });
@@ -295,7 +355,7 @@ export class PixrComponent implements OnInit {
     let test: IngressNameData;
     if (this.allIngressNames) {
       // const found = array1.find(element => element > 10);
-      test = this.allIngressNames.find((element => element.id === this.authService.user.uid));
+      test = this.allIngressNames.find((element => element.userUid === this.authService.user.uid));
     }
     return test ? test.name : '';
   }
@@ -319,11 +379,12 @@ export class PixrComponent implements OnInit {
   }
 
   showColumnInfo(column: Column): void {
-    const recs = this.portalRecs.find( p => p.colName === column.name);
-    const portalRecsData  = { column, portalRecs: [] };
-    if (recs){
-      portalRecsData.portalRecs.push(recs);
-    }
+    const portalRecsData = {column, portalRecs: []};
+    this.portalRecs.forEach(prtl => {
+      if (column.name === prtl.colName) {
+        portalRecsData.portalRecs.push(prtl);
+      }
+    });
     this.openMapDialog(portalRecsData);
   }
 
@@ -331,68 +392,70 @@ export class PixrComponent implements OnInit {
     return (-1 !== url.indexOf('https://intel.ingress.com/intel?', 0));
   }
 
-  openPortalDialog(dialogData: DialogData): void {
-    const dialogRef = this.dialog.open(PortalInfoDialogComponent, {
-      width: '500px',
-      height: '300px',
+  autoClosePortalDialog(data: PortalRec): void {
+    const dialogRef = this.dialog.getDialogById(this.portalDialogRef.id);
+    dialogRef.close(data);
+  }
+
+  openPortalDialog(dialogData: PortalRec): void {
+    this.portalDialogRef = this.dialog.open(PortalInfoDialogComponent, {
+      width: '540px',
+      height: '540px',
       data: dialogData
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    this.portalDialogRef.afterClosed().subscribe(result => {
+
+      console.log('Dialog closed got result: ' + JSON.stringify(result));
+
       if (result) {
         let status = 0;
-        const dat = result as DialogData;
+        const dat = result as PortalRec;
         if (!dat.url && !dat.name) {
           // remove residual latLng
           dat.latLng = null;
-          // alert('No data for ' + dat.portal.name +
-          //  ' url: ' + dat.portal.url +
-          //    ' and latLng: ' + JSON.stringify(dat.portal.latLng));
           status = this.P_EMPTY;
         } else {
           // Name is optional
           if (!dat.name || dat.name.length === 0) {
-            // alert('No Name now');
             dat.name = '';
             status = this.P_NO_NAME;
           }
           // get the LatLng
           const latLng: LatLng = this.makeLatLng(dat.url);
           if (!latLng) {
-            alert('No Lat Lng');
             dat.latLng = null;
             status = this.P_NO_URL;
           } else {
-            // alert('Setting LatLng');
             dat.latLng = latLng;
             status = this.P_FULL; // NOTE LatLng is all you need
           }
           if (status !== this.P_NO_NAME && status !== this.P_NO_URL) {
             status = this.P_FULL;
-            // alert ('FULL!');
           }
         }
-        // alert('Status is ' + status + ' portal data is ' + JSON.stringify(dat.portal));
-        dat.portal.status = status;
-        const path = dat.col.name + ':' + dat.portal.index;
-        let prtl: PortalRec = this.portalRecs.find(p => p.index === dat.portal.index && p.colName === dat.col.name);
+        dat.status = status;
+        const path = dat.colName + ':' + dat.index;
+        let prtl: PortalRec = this.portalRecs.find(p => p.index === dat.index && p.colName === dat.colName);
         if (!prtl) {
-          prtl =  {
-            index: dat.portal.index,
-            colName: dat.name,
+          prtl = {
+            index: dat.index,
+            colName: dat.colName, l: dat.l, r: dat.r, t: dat.t, b: dat.b,
             status,
             name: dat.name,
             url: dat.url,
             latLng: dat.latLng,
           };
+          console.log('NOT found then prtl:' + JSON.stringify(prtl));
         } else {
           prtl.name = dat.name;
           prtl.latLng = dat.latLng;
           prtl.url = dat.url;
           prtl.status = status;
+          console.log('FOUND then prtl:' + JSON.stringify(prtl));
         }
-        this.projectService.setPortalRec(dat.rawData.id, path, prtl);
-        this.drawPortalFrames();
+        this.projectService.setPortalRec(this.rawData.id, path, prtl);
+        this.updatePortalRecs(prtl);
       } else {
         console.log('dialogRef.afterClosed NO Data');
       }
@@ -438,10 +501,9 @@ export class PixrComponent implements OnInit {
   templateUrl: 'portal-info-dialog.html',
 })
 export class PortalInfoDialogComponent {
-
-  constructor(
-    public dialogRef: MatDialogRef<PortalInfoDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData) {
+  constructor(public dialogRef: MatDialogRef<PortalInfoDialogComponent>,
+              @Inject(MAT_DIALOG_DATA) public data: PortalRec,
+              public projectService: ProjectService) {
   }
 
   onCancelClick(): void {
@@ -450,14 +512,14 @@ export class PortalInfoDialogComponent {
   }
 
   // TODO this is not usefull right now could be usefull for standalone dialog component
-  openIntelMap(data: DialogData): void {
+  openIntelMap(data: PortalRec): void {
     if (data) {
-      if (this.isValidURL(data.portal.url)) {
-        window.open(data.portal.url, 'intel_map');
+      if (this.isValidURL(data.url)) {
+        window.open(data.url, 'intel_map');
         // this.dialogRef.close();
         // TODO pixr could hang when a dialog is open too long - timeout maybe
       } else {
-        alert(data.portal.url + ' is not a valid intel url');
+        alert(data.url + ' is not a valid intel url');
       }
     } else {
       console.log('Save Portal Data returns NO DATA');
@@ -472,14 +534,32 @@ export class PortalInfoDialogComponent {
     return (-1 !== url.indexOf('https://intel.ingress.com/intel?', 0));
   }
 
-  getPortalIndex(data: DialogData): number {
-    if (data.portal.index) {
-      return data.portal.index;
+  validateUrl(url: string, data: PortalRec): void {
+    console.log(url);
+    if (this.isValidURL(url)) {
+      console.log('VALID URL: ' + url);
+      this.dialogRef.close(data);
+    } else {
+      data.msg = 'Not a Valid intel URL!';
     }
-    return null;
   }
 
-  showJson(data: DialogData): void {
-    alert(JSON.stringify(data.portal));
+  eraseData(data: PortalRec): void {
+    if (confirm('Do you really wan to ERASE?')) {
+      data.latLng = null;
+      data.url = '';
+      this.dialogRef.close(data);
+    }
+  }
+
+  setClipboard(data: PortalRec): void {
+    const name = prompt('Enter a name to identify clipboard object', '');
+    if (name !== '') {
+      data.name = name;
+      this.projectService.clipboard = data;
+      console.log('Clipboard: ' + this.projectService.clipboard);
+    }else{
+      alert('A name is required to identify the object you wish to paste!');
+    }
   }
 }

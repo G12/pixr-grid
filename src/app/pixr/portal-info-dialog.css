@@ -1,0 +1,9 @@
+.urlInput {
+  text-overflow-ellipsis: true;
+  min-height: 40px;
+}
+
+.inputWarning {
+  color: tomato;
+}
+

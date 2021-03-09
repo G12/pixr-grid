@@ -1,11 +1,18 @@
 /*
-export class App {
-  public static P_EMPTY = -1;
-  public static P_FULL = 1;
-  public static P_NO_URL = 2;
-  public static P_NO_NAME = 3;
+export interface DialogData {
+  id: string;
+  name: string;
+  url: string;
+  columnName: string;
+  latLng: LatLng;
+  portalIndex: number;
 }
-*/
+ */
+
+export interface ColumnRecData {
+  column: Column;
+  portalRecs: PortalRec[];
+}
 
 export interface LatLng {
   lat: number;
@@ -15,15 +22,16 @@ export interface LatLng {
 export interface PortalRec {
   index: number;
   colName: string;
-  l?: number;
-  t?: number;
-  r?: number;
-  b?: number;
+  l: number;
+  t: number;
+  r: number;
+  b: number;
   status?: number;
   name?: string;
   url?: string;
   latLng?: LatLng;
   user?: string;
+  msg?: string;
 }
 
 export interface Column{
@@ -107,20 +115,7 @@ export interface BootParams {
 }
 
 export interface IngressNameData {
-  id: string;
+  userUid: string;
   name: string;
 }
 
-export interface DialogData {
-  name: string;
-  url: string;
-  rawData: RawData;
-  col: Column;
-  latLng: LatLng;
-  portal: PortalRec;
-}
-
-export interface ColumnRecData {
-  column: Column;
-  portalRecs: PortalRec[];
-}

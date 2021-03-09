@@ -15,10 +15,11 @@ export class MapComponent implements AfterViewInit {
   @ViewChild('map') mapElement: any;
   map: google.maps.Map;
   lastLatLng: LatLng;
+  lastIndex: number;
   // bounds: LatLngBounds;
   private ottawaCenter: google.maps.LatLng;
 
-  constructor(private projectService: ProjectService) {
+  constructor() {
   }
 
   ngAfterViewInit(): void {
@@ -47,7 +48,9 @@ export class MapComponent implements AfterViewInit {
           label: prtl.index + '',
         });
         marker.setMap(this.map);
-        if (this.lastLatLng) {
+        const diff = this.lastIndex ? prtl.index - this.lastIndex : 0;
+        console.log('prtl.index ' + prtl.index + ' - lastIndex ' + this.lastIndex + ' = ' + diff);
+        if (diff === 1) {
           // draw a line back to it
           const portalCoordinates = [
             {lat: prtl.latLng.lat, lng: prtl.latLng.lng},
@@ -64,6 +67,7 @@ export class MapComponent implements AfterViewInit {
         }
         // remember to assign a new value to this lastLatLng
         this.lastLatLng = new google.maps.LatLng(prtl.latLng);
+        this.lastIndex = prtl.index;
       }
     });
     this.fitBounds();

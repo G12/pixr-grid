@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BootParam, FirstSatProject, PortalRec, ProjectUser, RawData} from '../project.data';
+import {BootParam, FirstSatProject, IngressNameData, PortalRec, ProjectUser, RawData} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
@@ -23,8 +23,8 @@ export class ProjectService {
     canvasData: null,
   };
 
-  // portals: PortalData[] = [];
-  // columnCollection: ColumnData[] = [];
+  // NEW March 8 2021
+  public clipboard: PortalRec;
   projectUsers: ProjectUser[] = [];
 
   projectId: string;
@@ -52,13 +52,27 @@ export class ProjectService {
 
   }
 
+  /////////////////////////////  User data  ////////////////////////////
+  setIngressName(name: string, userUid: string): void{
+    const data: IngressNameData = {name, userUid};
+    this.firestore.collection('ingress_names').add(data);
+  }
+
   //////////////////////////// PortalRecCollection  /////////////////////
+  updatePortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
+    this.firestore.collection(rawDatId).doc(path).update(portalRec);
+  }
+
   getPortalRecs(path: string): any{
     return this.firestore.collection(path).snapshotChanges();
   }
 
   setPortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
-    this.firestore.collection(rawDatId).doc(path).set(portalRec);
+    this.firestore.collection(rawDatId).doc(path).set(portalRec).then(value => {
+      console.log('setportal return value: ' + JSON.stringify(value));
+    }).catch(reason => {
+      console.log('setPortal ERROR reason: ' + JSON.stringify(reason));
+    });
   }
 
   getfirstSatProjectDocRef(projectId): AngularFirestoreDocument{

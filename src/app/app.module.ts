@@ -10,7 +10,6 @@ import {PixrComponent, PortalInfoDialogComponent} from './pixr/pixr.component';
 import {FormsModule} from '@angular/forms';
 import { MapDialogComponent } from './dialogs/map/map-dialog.component';
 import {MapComponent} from './map/map.component';
-// import {AgmCoreModule} from '@agm/core';
 
 @NgModule({
   declarations: [

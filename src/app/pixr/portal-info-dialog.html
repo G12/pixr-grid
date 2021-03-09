@@ -1,27 +1,48 @@
-<h1 mat-dialog-title>Column {{data.col.name}}: {{getPortalIndex(data)}}</h1>
+<!--<p mat-dialog-title>Column {{data.name}}: {{data.index}}</p>-->
+<div mat-dialog-actions align="end">
+  <button *ngIf="data.latLng" mat-raised-button color="warn"
+          (click)="eraseData(data)">ERASE</button>
+  <button *ngIf="projectService.clipboard" (click)="projectService.clipboard = null">
+      Clear Clipboard
+  </button>
+  <button *ngIf="!projectService.clipboard && data.latLng" mat-raised-button color="accent"
+          (click)="setClipboard(data)">Copy</button>
+</div>
+<p mat-dialog-title>Column {{data.colName}}: {{data.index}}</p>
 <div mat-dialog-content>
   <div>
+  <!--  NAME FIELD ----  Obsolete until requested or needed
   <mat-form-field [style.width.%]="90">
     <mat-label>Portal Name (optional!)</mat-label>
     <input matInput [(ngModel)]="data.name">
   </mat-form-field>
   </div>
   <div>
+  -->
+    <p>Future Player and Portal information here including the name
+      of the person who dicovered it the name of a person who may have pasted it here
+    Also information about the status of completion. Also links for overall
+    map etc. etc. AND if possible a thumbnail of the selected portal</p>
+
+    <div mat-dialog-actions>
+      <button *ngIf="data.latLng"  mat-button color="primary" (click)="openIntelMap(data)">
+        Check portal url.</button>
+      <button *ngIf="!data.latLng" mat-button color="primary" (click)="searchIntelMap()">
+        Search Intel</button>
+    </div>
+    <p>The information buttons should be embeded whithin surrounding text</p>
+
+    <p class="inputWarning">{{data.msg}}</p>
   <mat-form-field [style.width.%]="90">
     <mat-label>Portal Location</mat-label>
-    <input matInput [(ngModel)]="data.url">
+    <input (ngModelChange)="validateUrl($event, data)" matInput [(ngModel)]="data.url"
+           class="urlInput" autocomplete="off">
   </mat-form-field>
   </div>
 </div>
-<div mat-dialog-actions>
-  <button color="primary" mat-button (click)="openIntelMap(data)">
-    Check portal url.</button>
-  <button color="primary" mat-button (click)="searchIntelMap()">
-    Search Intel</button>
-  <button color="primary" mat-button (click)="showJson(data)">
-    JSON</button>
-</div>
 <div mat-dialog-actions align="end">
-  <button mat-button [mat-dialog-close]="data">Save Portal Data</button>
+  <!-- NOTE Save Portal Data button is no longer necessary
+        we validate the url and close automatically when a valid url is entered -->
+  <!--<button mat-button [mat-dialog-close]="data">Save Portal Data</button>-->
   <button mat-button (click)="onCancelClick()">Cancel</button>
 </div>
