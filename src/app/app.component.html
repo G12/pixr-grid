@@ -1,5 +1,7 @@
 <div *ngIf="authService.afAuth.user | async as  user; else showLogin">
-  <div class="wrapper" [style.width.px]="4907">
+  <!-- TODO width hard codec here -->
+  <!--<div class="wrapper" [style.width.px]="6611">-->
+  <div class="wrapper">
     <app-pixr></app-pixr>
   </div>
 </div>

@@ -7,6 +7,7 @@ export interface Messages {
 export interface MsgDat {
   msg: string;
   time: string;
+  prtlId?: string;
 }
 
 export interface CharDat{
@@ -16,16 +17,19 @@ export interface CharDat{
 }
 
 /* firestore document */
-export interface Char {
-  id: string; // unique identifier Char: then column names A to P...
-  final: CharDat;
-  guesses: CharDat[];
+export interface ColumnChar {
+  id?: string; // unique identifier _CHAR: then column names A to P...
+  final?: CharDat;
+  guesses?: string;
+  rawDataId: string;
+  portalCount?: number;
 }
 
 
 export interface ColumnRecData {
   column: Column;
-  portalRecs: PortalRec[];
+  portalRecs?: PortalRec[];
+  columnChar?: ColumnChar;
 }
 
 export interface LatLng {
@@ -40,6 +44,7 @@ export interface PortalRec {
   colName: string;
   rawDataId: string;
   user: string;
+  owner: string;
   l: number;
   t: number;
   r: number;

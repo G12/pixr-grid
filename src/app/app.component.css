@@ -38,5 +38,6 @@
 
 /* make page able to zoom in zoom out on mobile */
 .wrapper {
-  overflow: hidden;
+  /*overflow: hidden;*/
+  overflow: visible;
 }

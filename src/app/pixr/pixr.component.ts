@@ -1,8 +1,8 @@
-import {Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {
   BootParam,
-  Column,
+  Column, ColumnChar,
   ColumnRecData,
   FirstSatProject,
   IngressNameData,
@@ -26,7 +26,7 @@ import {MapDialogComponent} from '../dialogs/map/map-dialog.component';
   templateUrl: './pixr.component.html',
   styleUrls: ['./pixr.component.css']
 })
-export class PixrComponent implements OnInit {
+export class PixrComponent implements OnInit, AfterViewInit {
 
   P_EMPTY = -1;
   P_FULL = 1;
@@ -41,15 +41,25 @@ export class PixrComponent implements OnInit {
   bannerLeft = 60;
   bannerLeftMargin = 60;
   logoutButtonWidth = 56;
-  bannerWidth = 600;
+  bannerWidth: number;
 
   canvas: HTMLCanvasElement;
+  image: HTMLImageElement;
   /** Template reference to the canvas element */
   @ViewChild('canvasEl') canvasEl: ElementRef;
+  @ViewChild('myImage') myImage: ElementRef;
   /** Canvas 2d context */
   private ctx: CanvasRenderingContext2D;
   img: any;
-  imgUrl: string; // assigned after project data aquired from Firebase
+
+  //////////////////////////  Hard Code ZONE Caution
+  imgUrl = 'assets/FirstSatBlackSmall.jpg'; // 'assets/FirstSatBlack.jpg';
+  // imgUrl: string; // assigned after project data aquired from Firebase
+  realWidth = 4887;
+  realHeight = 2699;
+  logBuffer = '';
+  ///////////////////////////////////////////////////
+
   width: number;
   height: number;
   // Firestore data
@@ -74,6 +84,7 @@ export class PixrComponent implements OnInit {
 
   // dialogData: DialogData = {id: '', name: '', url: '', latLng: null, columnName: '', portalIndex: null};
   private portalDialogRef: MatDialogRef<PortalInfoDialogComponent, PortalRec>;
+  validated = false; // After user sets ingress name set true and shoe images
 
   constructor(public authService: AuthService,
               private projectService: ProjectService,
@@ -97,9 +108,13 @@ export class PixrComponent implements OnInit {
     this.rawDataSubscription = this.rawDataDoc.get().subscribe(doc => {
       if (doc.exists) {
         this.rawData = doc.data() as RawData;
-        this.width = this.rawData.displayWidth;
-        this.height = this.rawData.displayHeight;
-        this.imgUrl = this.rawData.imgUrl;
+        this.logger('In rawDataSubscription - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
+        // this.width = this.rawData.displayWidth;
+        // this.bannerWidth = this.width;
+        // this.height = this.rawData.displayHeight;
+
+        // this.imgUrl = this.rawData.imgUrl;
+
         // Subscribe to all the portalRec docs
         this.projectService.getPortalRecs(id).subscribe(data => {
           this.portalRecs = data.map(e => {
@@ -121,7 +136,7 @@ export class PixrComponent implements OnInit {
                 ...e.payload.doc.data()
               } as string[];
             });
-            this.initImage(this.imgUrl);
+            // this.initImage(this.imgUrl);
             this.drawPortalFrames();
           });
         });
@@ -131,8 +146,12 @@ export class PixrComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.bannerWidth = window.innerWidth;
+  ngAfterViewInit(): void {
+    // setTimeout(() => {
+    // this.initImage(this.imgUrl);
+    // this.initCanvas();
+      // this.bannerWidth = window.innerWidth;
+    // });
     // For client app first get image data from Firebase then
     // Get BootParam for fs_user then subscribe to default FirstSaturdayProj
     this.projectService.userBootParamDocRef.get().subscribe(data => {
@@ -149,8 +168,28 @@ export class PixrComponent implements OnInit {
     });
   }
 
+  ngOnInit(): void {
+  }
+
+  onImageLoad(myImage: HTMLImageElement): void {
+    this.width = myImage.width;
+    this.height = myImage.height;
+    this.img = myImage;
+    this.bannerWidth = this.width;
+  }
+
   initCanvas(): void {
+
     this.canvas = this.canvasEl.nativeElement;
+    this.ctx = this.canvas.getContext('2d');
+    this.logger('Browser Dimensions: ' + this.width + ' x ' + this.height +
+                ' and Real Dimensions' + this.realWidth + ' x ' + this.realHeight);
+    if (this.width !== this.realWidth) {
+      this.width = this.realWidth;
+      this.height = this.realHeight;
+    }
+    this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
+
     // MOUSE MOVE EVENT
     this.canvas.addEventListener('mousemove', (event): any => {
       const xy = this.getXY(event);
@@ -193,24 +232,6 @@ export class PixrComponent implements OnInit {
       this.handleMouseDown(event);
     });
     // End of MOUSE DOWN EVENT
-    this.ctx = this.canvas.getContext('2d');
-    // this.drawImageOnLoad(this.ctx, this.img);
-    // this.img.onload = () => {
-    this.ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height);
-    // };
-    this.img.onError = () => {
-      alert('Error Loading Image: ' + this.imgUrl);
-    };
-  }
-
-  initImage(src: string): void {
-    this.imgUrl = src;
-    this.img = new Image();
-    this.img.src = this.imgUrl;
-  }
-
-  drawCanvas(): void {
-    this.initCanvas();
   }
 
   updatePortalRecs(prtl: PortalRec): void {
@@ -229,7 +250,8 @@ export class PixrComponent implements OnInit {
       msg = msg + ' Discovered ';
       this.projectService.setPortalRec(this.rawData.id, path, prtl);
     }
-    this.projectService.setLogMsg(this.rawData.id, msg + ' ' + path);
+    this.projectService.setLogMsg(this.rawData.id,
+      msg + ' ' + path, prtl);
     this.drawPortalFrame(prtl);
   }
 
@@ -258,11 +280,13 @@ export class PixrComponent implements OnInit {
     }
   }
 
+  /*
   getLatestRawData(): void {
     this.rawDataDoc.get().subscribe(doc => {
       if (doc.exists) {
         // console.log('defaultRawData: ' + JSON.stringify(doc.data()));
         this.rawData = doc.data() as RawData;
+        this.logger('In getLatestRawData - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
         return true;
         // this.drawPortalFrames();
       } else {
@@ -270,6 +294,7 @@ export class PixrComponent implements OnInit {
       }
     });
   }
+   */
 
   /// Mouse Events ( after canvas initialized
   handleMouseDown(e): void {
@@ -287,7 +312,9 @@ export class PixrComponent implements OnInit {
               let latLng = null;
               const path = column.name + ':' + pr.index;
               const prtl: PortalRec = this.portalRecs.find(p => p.index === pr.index && p.colName === column.name);
+              let owner = '';
               if (prtl) {
+                owner = prtl.owner ? prtl.owner : '';
                 name = prtl.name;
                 url = prtl.url;
                 latLng = prtl.latLng;
@@ -296,6 +323,7 @@ export class PixrComponent implements OnInit {
                 rawDataId: this.rawData.id,
                 colName: column.name,
                 user: this.ingressName,
+                owner,
                 index: pr.index, l: pr.l, r: pr.r, t: pr.t, b: pr.b,
                 name,
                 url,
@@ -316,10 +344,12 @@ export class PixrComponent implements OnInit {
                   // this.projectService.setLogMsg(this.rawData.id,
                   //  this.ingressName + ' discovered ' + dlgData.colName + ':' + dlgData.index);
                   this.projectService.setPortalRec(this.rawData.id, path, dlgData);
+                  dlgData.owner = this.ingressName;
                   this.updatePortalRecs(dlgData);
-                  // alert('AUTO UPDATING portal data - frame will be drawn white');
                   this.projectService.setLogMsg(
-                    this.rawData.id, this.ingressName + ' Pasted ' + src + ' to ' + dest);
+                    this.rawData.id,
+                    this.ingressName + ' Pasted ' + src + ' to ' + dest,
+                    dlgData );
                 } else {
                   canOpen = true;
                 }
@@ -370,15 +400,19 @@ export class PixrComponent implements OnInit {
   }
 
   setIngressName(): void {
-    const name = prompt('Please enter a Name', this.SavedIngressName);
+    const testMsg = ''; // ' testing testing: Image dimensions: ' + this.width + ' x ' + this.height;
+
+    const name = prompt('Please enter a Name' + testMsg, this.SavedIngressName);
     if (name && name !== '') {
+      this.validated = true;
       this.ingressName = name;
       this.usersService.updateIngressName(name);
       this.expandMe = false;
-      this.drawCanvas();
+      this.initCanvas();
       this.bannerInfo = '  @ ' + name + ' started working!' + this.bannerInfo;
       if (this.rawData) {
-        this.projectService.setLogMsg( this.rawData.id, this.ingressName + ' Logged In');
+        this.projectService.setLogMsg( this.rawData.id,
+          this.ingressName + ' Logged In', null);
       }
     }
   }
@@ -403,14 +437,36 @@ export class PixrComponent implements OnInit {
     }
   }
 
+  isDone(column: Column): boolean {
+    const charId = '_CHAR:' + column.name;
+    const test: ColumnChar = this.portalRecs.find(cr => cr.id === charId);
+    console.log('ColumnChar: ' + JSON.stringify(test));
+    if (test && test.final) {
+      const name = this.allIngressNames.find((element => element.userUid === test.final.uuid));
+      if (name) {
+        return test.final.char.length > 0;
+      }
+    }
+    return false;
+  }
+
   showColumnInfo(column: Column): void {
-    const portalRecsData = {column, portalRecs: []};
+    const portalCount = column.portals.length;
+    const colRecData: ColumnRecData = {column, portalRecs: []};
     this.portalRecs.forEach(prtl => {
       if (column.name === prtl.colName) {
-        portalRecsData.portalRecs.push(prtl);
+        colRecData.portalRecs.push(prtl);
       }
     });
-    this.openMapDialog(portalRecsData);
+    const charId = '_CHAR:' + column.name;
+    let test: ColumnChar = this.portalRecs.find(cr => cr.id === charId);
+    if (!test) {
+      const unknown: any = {
+        rawDataId: this.rawData.id, id: charId, guesses: '', final: '', portalCount};
+      test = unknown as ColumnChar;
+    }
+    colRecData.columnChar = test;
+    this.openMapDialog(colRecData);
   }
 
   isValidURL(url: string): boolean {
@@ -465,6 +521,7 @@ export class PixrComponent implements OnInit {
             rawDataId: this.rawData.id,
             index: dat.index,
             user: this.ingressName,
+            owner: this.ingressName,
             colName: dat.colName, l: dat.l, r: dat.r, t: dat.t, b: dat.b,
             status,
             name: dat.name,
@@ -472,6 +529,7 @@ export class PixrComponent implements OnInit {
             latLng: dat.latLng,
           };
         } else {
+          prtl.owner = this.ingressName;
           prtl.user = dat.user;
           prtl.name = dat.name;
           prtl.latLng = dat.latLng;
@@ -488,12 +546,15 @@ export class PixrComponent implements OnInit {
   openMapDialog(columnRecData: ColumnRecData): void {
     const dialogRef = this.dialog.open(MapDialogComponent, {
       width: '600px',
-      height: '600px',
+      // height: '800px',
       data: columnRecData
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        const colRecData: ColumnRecData = result;
+        console.log('openMapDialog afterClose result: ' + JSON.stringify(colRecData.columnChar));
+        // this.projectService.setCodeChar(colRecData.columnChar);
       } else {
       }
     });
@@ -512,7 +573,22 @@ export class PixrComponent implements OnInit {
     }
     return null;
   }
+
+  msgLogClick(msgDat: MsgDat): void {
+    alert(JSON.stringify(msgDat));
+  }
+
+  // store messgaes to a buffer to view on mobile etc.
+  logger(msg: string): void {
+    const date = JSON.stringify(new Date());
+    this.logBuffer += ' ' + date + ': ' + msg;
+  }
+
 }
+
+
+////////////////////////////////////////////////////////////////////////////
+// TODO get this out here
 
 @Component({
   selector: 'app-portal-info-dialog',
@@ -542,6 +618,10 @@ export class PortalInfoDialogComponent {
     }
   }
 
+  openMissionTool(): void {
+    window.open('https://missions.ingress.com/', 'mission_tool');
+  }
+
   searchIntelMap(): void {
     window.open('https://intel.ingress.com/intel', 'intel_map');
   }
@@ -560,8 +640,10 @@ export class PortalInfoDialogComponent {
 
   eraseData(data: PortalRec): void {
     if (confirm('Do you really wan to ERASE?')) {
-      const msg = data.user + ' Erased ' + data.colName + ':' + data.index;
-      this.projectService.setLogMsg(data.rawDataId, msg);
+      const msg = data.user + ' Erased ' + data.colName + ':' + data.index
+          + ' owner: ' + data.owner;
+      this.projectService.setLogMsg(data.rawDataId, msg, null);
+      data.owner = '';
       data.latLng = null;
       data.url = '';
       this.dialogRef.close(data);
@@ -584,7 +666,7 @@ export class PortalInfoDialogComponent {
   clearAllMessages(data: PortalRec): void {
     if (data.user === 'G12mo'){
       if (confirm('CLEAR_ALL_MESSAGES')){
-        this.projectService.setLogMsg(data.rawDataId, 'CLEAR_ALL_MESSAGES');
+        this.projectService.setLogMsg(data.rawDataId, 'CLEAR_ALL_MESSAGES', data);
       }
     }
   }

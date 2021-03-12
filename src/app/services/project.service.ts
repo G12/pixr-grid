@@ -1,5 +1,15 @@
 import {Injectable} from '@angular/core';
-import {BootParam, FirstSatProject, IngressNameData, PortalRec, ProjectUser, RawData, Messages} from '../project.data';
+import {
+  BootParam,
+  FirstSatProject,
+  IngressNameData,
+  PortalRec,
+  ProjectUser,
+  RawData,
+  Messages,
+  MsgDat,
+  ColumnChar
+} from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
@@ -59,21 +69,34 @@ export class ProjectService {
   }
 
   ////////////////// disparate PortalRecCollection objects //////////////
+  setCodeChar(columnChar: ColumnChar): void{
+    console.log('setCodeChar ColumnChar: ' + JSON.stringify(columnChar));
+    // if (true) {return; }
+    this.firestore.collection(columnChar.rawDataId).doc(columnChar.id).set(columnChar).then(value => {
+      // console.log('setportal return value: ' + JSON.stringify(value));
+    }).catch(reason => {
+      console.log('setPortal ERROR reason: ' + JSON.stringify(reason));
+    });
+  }
 
-  setLogMsg(rawDatId: string, msg: string): void{
+  setLogMsg(rawDatId: string, msg: string, prtlRec: PortalRec): void{
     this.firestore.collection(rawDatId).doc('_MsgLog').get().subscribe(document => {
-      const d = new Date();
-      const time = JSON.stringify(d);
-      const msgDat = {msg, time};
+      const time = JSON.stringify(new Date());
+      let id = '';
+      if (prtlRec) { id = prtlRec.colName + ':' + prtlRec.index; }
+      const msgDat: MsgDat = {msg, time, prtlId: id };
       let messagesDoc: Messages;
       if (msg === 'CLEAR_ALL_MESSAGES') {
         messagesDoc = {messages: []};
+        // Send a user friendly message
+        const usrName = prtlRec ? prtlRec.user : '';
+        msgDat.msg = usrName + ' Cleared the Log!';
       } else if (document.exists){
         messagesDoc = document.data() as Messages;
       } else {
         messagesDoc = {messages: []};
       }
-      messagesDoc.messages.push(msgDat);
+      messagesDoc.messages.unshift(msgDat);
       this.firestore.collection(rawDatId).doc('_MsgLog').set(messagesDoc).then(doc => {
         // console.log('setLogMsg return value: ' + JSON.stringify(doc));
       }).catch(reason => {

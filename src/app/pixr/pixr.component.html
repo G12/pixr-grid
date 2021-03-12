@@ -5,7 +5,10 @@
   <mat-icon>logout</mat-icon>
 </button>
 
-<div class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">banner messages</div>
+<div *ngIf="(bannerWidth && logMsgArray)" class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">
+  <span *ngFor="let msgDat of logMsgArray" (click)="msgLogClick(msgDat)">
+    @{{msgDat.msg}}&nbsp;&nbsp;&nbsp;</span>
+</div>
 
 <div class="container">
   <mat-expansion-panel (opened)="panelOpenState = true"
@@ -16,7 +19,8 @@
         &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div *ngIf="!canvas; else Content" class="example-button-row">
+    <p class="logBuffer" *ngIf="this.ingressName === 'G12mo'">{{logBuffer}}</p>
+    <div *ngIf="!validated; else Content" class="example-button-row">
       <h1 *ngIf="rawData">{{rawData.name}}</h1>
       <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
               (click)="setIngressName()">
@@ -32,19 +36,33 @@
 
   <div>
     <div class="header" [style.width.px]="width">
-      <div *ngIf="canvas">
+      <div *ngIf="validated">
         <div class="column" [style.width.px]="column.width"
              *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
           <h1>Column {{column.name}}</h1>
-          <p>Click on image below.</p>
-          <p>Enter portal url.</p>
-          <p>Click "here" to see Map.</p>
+          <p>Click here for Portal Map</p>
+          <!-- TODO BAD performence on clickable element -->
+          <!--
+          <div *ngIf="isDone(column)">
+            <p>Column is complete</p>
+            <p>CHARACTER (under construction)</p>
+            <p>Click "here" to see Map.</p>
+          </div>
+          <div>
+            <p>Click on image below.</p>
+            <p>Enter portal url.</p>
+            <p>Click "here" to see Map.</p>
+          </div>
+          -->
         </div>
       </div>
     </div>
-    <canvas *ngIf="(img)" class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
+    <canvas class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
   </div>
 </div>
-<div>
-  <div *ngFor="let msgDat of logMsgArray">{{msgDat.msg}}</div>
-</div>
+<img alt="IngressFS @home Password Challenge" class="myImage"
+     #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)"
+      [width]="realWidth" [height]="realHeight"/>
+<!-- ngIf not really necessary
+<img class="myImage" *ngIf="!validated" #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)" />
+-->

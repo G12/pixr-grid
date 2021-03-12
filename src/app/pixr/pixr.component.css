@@ -1,3 +1,6 @@
+.myImage {
+  display: none;
+}
 .header {
   padding: 5px;
   font-weight: bold;
@@ -9,8 +12,8 @@
   border-left: black solid 1px;
   text-align: center;
   height: 148px;
+  cursor: pointer;
 }
-
 .container {
   margin-top: 48px;
 }
@@ -87,4 +90,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+}
+
+.logBuffer {
+  border: black;
 }

@@ -22,24 +22,40 @@
   </div>
   <div>
   -->
-    <p>Future Player and Portal information here including the name
-      of the person who dicovered it the name of a person who may have pasted it here
-    Also information about the status of completion. Also links for overall
-    map etc. etc. AND if possible a thumbnail of the selected portal</p>
 
-    <div mat-dialog-actions>
-      <button *ngIf="data.latLng"  mat-button color="primary" (click)="openIntelMap(data)">
-        Check portal url.</button>
-      <button *ngIf="!data.latLng" mat-button color="primary" (click)="searchIntelMap()">
-        Search Intel</button>
+    <h4>Basic use</h4>
+    <div *ngIf="data.latLng">
+    <p>After the portal location has been found, you can copy it and paste where
+      you see duplicate images.</p>
     </div>
-    <p>The information buttons should be embeded whithin surrounding text</p>
-
+    <ul>
+      <li *ngIf="!data.latLng">If you <strong>Know Where</strong> the portal is
+        go to the intel map and copy the link</li>
+      <li *ngIf="!data.latLng"><button mat-raised-button color="primary" (click)="searchIntelMap()">
+        Intel Map.</button></li>
+      <li *ngIf="!data.latLng"><strong>Don't know the location:</strong> use the
+        <button mat-button color="primary" (click)="openMissionTool()">
+          Mission Authoring Tool</button></li>
+      <li *ngIf="!data.latLng">Create a new mission then use the Search titles and descriptions input
+        to help you find the location; then go to the intel map to copy the link (as above).
+      </li>
+      <li *ngIf="data.latLng">if you don't think this location is correct</li>
+      <li *ngIf="data.latLng"><button   mat-raised-button color="primary" (click)="openIntelMap(data)">
+        Check on the Intel Map</button></li>
+    </ul>
+    <div *ngIf="!data.latLng">
+    <p>Paste the intel location: (looks like this)</p>
+      <p><i>https://intel.ingress.com/intel?ll=45.421191,-75.682643&z=15</i></p>
+      <p>in the field below.
+    </p>
+    </div>
+    <p *ngIf="data.latLng">Portal discovered by <strong>{{data.owner}}</strong></p>
+    <p *ngIf="data.latLng">If you think the location is not correct: <strong>Erase</strong> the portal to enter a new value.</p>
     <p class="inputWarning">{{data.msg}}</p>
   <mat-form-field [style.width.%]="90">
     <mat-label>Portal Location</mat-label>
     <input (ngModelChange)="validateUrl($event, data)" matInput [(ngModel)]="data.url"
-           class="urlInput" autocomplete="off">
+           class="charInput" autocomplete="off" [disabled]="!data.latLng === false">
   </mat-form-field>
   </div>
 </div>
