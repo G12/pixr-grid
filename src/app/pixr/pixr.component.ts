@@ -31,6 +31,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   P_FULL = 1;
   P_NO_URL = 2;
   P_NO_NAME = 3;
+  grey = '#666666';
 
   // TODO add project selection for "readonly" historic projects
   // expansion panel
@@ -101,9 +102,10 @@ export class PixrComponent implements OnInit, AfterViewInit {
       window.innerWidth - this.bannerLeftMargin - this.logoutButtonWidth);
   }
 
-  buildColumnRecDataArray(testColRec: ColumnRecData): void {
+  buildColumnRecDataArray(): void {
+    // BIG NO NO do not call more than once overloaded the backend
     if (this.dataReady){ return; }
-    console.log('testColRec: ' + JSON.stringify(testColRec));
+    // now we can initialize or get the column rec data
     this.columnRecDataArray = [];
     this.rawData.columns.forEach(column => {
       // Build the PortalRec[] for this column
@@ -117,7 +119,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
         if (test2) {
           if (test2.status === this.P_FULL){
             portalCount++;
-            console.log('portalCount: ' + portalCount + ' for ' + column.name);
           }
           portalRecs.push(test2);
         } else {
@@ -135,13 +136,14 @@ export class PixrComponent implements OnInit, AfterViewInit {
       });
       const percentDone = Math.round(portalCount / column.portals.length * 100);
       let colRecData: ColumnRecData;
+      const testColRec: any = this.portalRecs.find(prd => prd.id === this.colRecPrefix + column.name);
       if (testColRec) {
          // Find the corresponding ColumnRecData
         const unknown: any = this.portalRecs.find(clrDat => clrDat.id === this.colRecPrefix + column.name);
         if (unknown) {
           const temp = unknown as ColumnRecData;
           colRecData = {
-            rawDataId: this.rawData.id, columnChar: temp.columnChar, id: temp.id
+            rawDataId: this.rawData.id, columnChar: temp.columnChar, id: temp.id,
           };
           colRecData.columnChar.portalCount = portalCount; // update the portal count
           colRecData.columnChar.percentDone = percentDone;
@@ -155,21 +157,29 @@ export class PixrComponent implements OnInit, AfterViewInit {
           id: '_CHAR:' + column.name, // unique identifier _CHAR: then column names A to P...
           rawDataId: this.rawData.id,
           portalsLength: column.portals.length,
-          guesses: '', final, portalCount, percentDone
+          notes: '', final, portalCount, percentDone
         };
+        console.log('TESTING TESTING Database Update for Column: ' + column.name);
+        // Add an empty ColumnRecData template
+        const template = {
+          rawDataId: this.rawData.id, columnChar, id: this.colRecPrefix + column.name,
+        };
+        this.projectService.setColumnRecData(template);
+        // After updating firebase add the optional fields for passing data around
         colRecData = {
-          rawDataId: this.rawData.id, columnChar, id: this.colRecPrefix + column.name
+          rawDataId: this.rawData.id, columnChar, id: this.colRecPrefix + column.name,
+          column: null, portalRecs: null, ingressName: ''
         };
-        this.projectService.setColumnRecData(colRecData);
       }
       // add the optional fields for passing data around
       colRecData.column = column;
       colRecData.portalRecs = portalRecs;
       colRecData.ingressName = this.ingressName;
       this.columnRecDataArray.push(colRecData);
+      this.dataReady = true;
     });
+    console.log('TESTING TESTING DataReady');
     this.dataReady = true;
-    // console.log('this.columnRecDataArray: ' + JSON.stringify(this.columnRecDataArray));
   }
 
   ///////////////  initialization helper methods //////////////////////
@@ -202,12 +212,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
               ...e.payload.doc.data()
             } as string[];
           });
-          console.log('TEST buildColumnRecDataArray() drawPortalFrames()');
+          console.log('TEST drawPortalFrames()');
           this.drawPortalFrames();
-          // BIG NO NO overloaded the backend
-          // now we can initialize or get the column rec data
-          const colRec: any = this.portalRecs.find(prd => prd.id === this.colRecPrefix + 'A');
-          this.buildColumnRecDataArray(colRec);
+          this.buildColumnRecDataArray();
         });
       }
     });
@@ -493,32 +500,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
     this.openMapDialog(columnRecData);
   }
 
-  /*
-  XshowColumnInfo(column: Column): void {
-    // TODO see above for proposed update to this method
-    const ingressName = this.ingressName;
-    const portalsLength = column.portals.length;
-    const colRecData: ColumnRecData = {
-      rawDataId: this.rawData.id, column,
-      portalRecs: [], ingressName, id: column.name};
-    this.portalRecs.forEach(prtl => {
-      if (column.name === prtl.colName) {
-        colRecData.portalRecs.push(prtl);
-      }
-    });
-    const charId = '_CHAR:' + column.name;
-    const test: any = this.portalRecs.find(cr => cr.id === charId);
-    let colChar = test as ColumnChar;
-    if (!colChar) {
-      const final = {char: '', ingressName: '', time: ''};
-      colChar = {rawDataId: this.rawData.id, id: charId,
-        guesses: '', final, portalsLength};
-    }
-    colRecData.columnChar = colChar;
-    this.openMapDialog(colRecData);
-  }
-   */
-
   isValidURL(url: string): boolean {
     return (-1 !== url.indexOf('https://intel.ingress.com/intel?', 0));
   }
@@ -603,8 +584,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         const colRecData: ColumnRecData = result;
-        console.log('openMapDialog afterClose result: ' + JSON.stringify(colRecData.columnChar));
-        // this.projectService.setCodeChar(colRecData.columnChar);
+        alert('Why am I here?');
+        // console.log('openMapDialog afterClose result: ' + JSON.stringify(colRecData.columnChar));
       } else {
       }
     });

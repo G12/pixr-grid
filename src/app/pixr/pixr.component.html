@@ -38,12 +38,28 @@
       <div *ngIf="dataReady && validated">
         <div class="column" [style.width.px]="colRec.column.width"
              *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
-          <h1>Column {{colRec.column.name}}</h1>
-          <div  *ngIf="colRec.columnChar">
-            <p *ngIf="colRec.columnChar.final">Code Character: <strong>{{colRec.columnChar.final.char}}</strong></p>
-            <p  *ngIf="colRec.columnChar.guesses">Suggestions: {{colRec.columnChar.guesses}}</p>
+          <h1 class="overflow">Column {{colRec.column.name}}: {{colRec.columnChar.portalsLength}} portals</h1>
+          <h1 class="overflow">Letter <strong>{{colRec.columnChar.final.char}}</strong>
+            <i *ngIf="colRec.columnChar.final.char.length > 0" [style.color]="grey" [style.font-size.em]=".7">
+              by {{colRec.columnChar.final.ingressName}}
+            </i>
+            <i *ngIf="colRec.columnChar.final.char.length === 0" [style.color]="grey" [style.font-size.em]=".7">
+              undetermined
+            </i></h1>
+          <div>
+            <h1>
+              <i class ="overflow" [style.color]="grey" [style.font-size.em]=".7">
+                {{colRec.columnChar.portalCount}}/{{colRec.columnChar.portalsLength}}
+                found: {{colRec.columnChar.percentDone}}% done
+              </i>
+            </h1>
+            <h1 class="overflow">
+              <i [style.color]="grey" [style.font-size.em]=".7">
+                Note: {{colRec.columnChar.notes}}
+              </i>
+            </h1>
           </div>
-          <p>Click here for Portal Map</p>
+          <h1 class="overflow">Click for Portal Map</h1>
         </div>
       </div>
     </div>

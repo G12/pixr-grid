@@ -11,7 +11,7 @@
   border-right: black solid 1px;
   border-left: black solid 1px;
   text-align: center;
-  height: 148px;
+  height: 248px;
   cursor: pointer;
 }
 .container {
@@ -36,6 +36,11 @@
   text-align: left;
   vertical-align: bottom;
   height: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overflow {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -94,4 +99,8 @@
 
 .logBuffer {
   border: black;
+}
+
+.small {
+  color: lightgray;
 }

@@ -1,27 +1,26 @@
-<p *ngIf="columnRecData.columnChar.final" mat-dialog-title>Column {{columnRecData.column.name}}:
-  {{columnRecData.columnChar.portalsLength}} portals %{{columnRecData.columnChar.percentDone}} done
-  Character: <strong>
-    {{columnRecData.columnChar.final.char}}</strong>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i [style.font-size.em]=".7"
-     *ngIf="columnRecData.columnChar.guesses &&
-  columnRecData.columnChar.guesses.length > 0"> maybe? {{columnRecData.columnChar.guesses}}</i>
+<p *ngIf="columnRecData" mat-dialog-title>Column {{columnRecData.column.name}}&nbsp;&nbsp;
+  {{columnRecData.columnChar.portalCount}}/{{columnRecData.columnChar.portalsLength}} portals
+  Letter: <strong>{{final}}</strong>
 </p>
+<p><i [style.font-size.em]=".9"> Notes: {{notes}} [ {{columnRecData.columnChar.percentDone}}% ] done</i></p>
 <div mat-dialog-content>
   <app-map *ngIf="columnRecData" [columnRecData]="columnRecData"></app-map>
   <div *ngIf="columnRecData" class="map-form">
-    <mat-form-field [style.width.%]="48">
+    <mat-form-field [style.width.%]="48" appearance="outline" >
       <mat-label>Final Code Character</mat-label>
       <input (ngModelChange)="validateChar(columnRecData)"
              matInput [(ngModel)]="final"
              class="charInput" autocomplete="off">
+      <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
       <mat-hint>Enter the Final Code <strong>Character</strong> or <strong>Gliff</strong> here.</mat-hint>
     </mat-form-field>
-    <mat-form-field [style.width.%]="48">
-      <mat-label>Append a Suggestion</mat-label>
+    <mat-form-field [style.width.%]="48" appearance="outline">
+      <mat-label>Notes</mat-label>
       <input (ngModelChange)="validateChar(columnRecData)"
-             matInput [(ngModel)]="guesses"
+             matInput [(ngModel)]="notes"
              class="charInput" autocomplete="off">
-      <mat-hint>For example "H or 8 or K"</mat-hint>
+      <mat-icon matSuffix>mode</mat-icon>
+      <mat-hint>For example could be "H or 8 or K"</mat-hint>
     </mat-form-field>
   </div>
 </div>

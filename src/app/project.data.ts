@@ -20,7 +20,7 @@ export interface CharDat{
 export interface ColumnChar {
   id?: string; // unique identifier _CHAR: then column names A to P...
   final?: CharDat;
-  guesses?: string;
+  notes?: string;
   rawDataId: string;
   portalCount?: number;
   portalsLength: number;

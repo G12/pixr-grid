@@ -9,7 +9,8 @@ import {ProjectService} from '../../services/project.service';
 })
 export class MapDialogComponent {
   final = '';
-  guesses = '';
+  notes = '';
+  grey = '#cccccc';
   constructor(
     public dialogRef: MatDialogRef<MapDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public columnRecData: ColumnRecData,
@@ -17,8 +18,8 @@ export class MapDialogComponent {
       if (columnRecData.columnChar.final) {
         this.final = columnRecData.columnChar.final.char;
       }
-      if (columnRecData.columnChar.guesses) {
-        this.guesses = columnRecData.columnChar.guesses;
+      if (columnRecData.columnChar.notes) {
+        this.notes = columnRecData.columnChar.notes;
       }
   }
 
@@ -35,8 +36,8 @@ export class MapDialogComponent {
          template.columnChar.final.ingressName = result.ingressName;
          template.columnChar.final.time = JSON.stringify(new Date());
        }
-       if (this.guesses !== result.columnChar.guesses){
-         template.columnChar.guesses = this.guesses;
+       if (this.notes !== result.columnChar.notes){
+         template.columnChar.notes = this.notes;
        }
        this.dialogRef.close();
        this.projectService.setColumnRecData(template);

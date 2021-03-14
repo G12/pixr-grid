@@ -39,23 +39,24 @@
       <li *ngIf="!data.latLng">Create a new mission then use the Search titles and descriptions input
         to help you find the location; then go to the intel map to copy the link (as above).
       </li>
-      <li *ngIf="data.latLng">if you don't think this location is correct</li>
+      <li *ngIf="data.latLng">if you think this location is <strong>Incorrect?</strong></li>
       <li *ngIf="data.latLng"><button   mat-raised-button color="primary" (click)="openIntelMap(data)">
         Check on the Intel Map</button></li>
     </ul>
     <div *ngIf="!data.latLng">
-    <p>Paste the intel location: (looks like this)</p>
-      <p><i>https://intel.ingress.com/intel?ll=45.421191,-75.682643&z=15</i></p>
+      <p>Paste Locatiion <i [style.font-size.em]=".9">https://intel.ingress.com/intel?ll=45,-75&z=15</i></p>
       <p>in the field below.
     </p>
     </div>
     <p *ngIf="data.latLng">Portal discovered by <strong>{{data.owner}}</strong></p>
-    <p *ngIf="data.latLng">If you think the location is not correct: <strong>Erase</strong> the portal to enter a new value.</p>
+    <p *ngIf="data.latLng">If you think this location is Incorrect: <strong>Erase</strong> the portal to enter a new value.</p>
     <p class="inputWarning">{{data.msg}}</p>
-  <mat-form-field [style.width.%]="90">
+  <mat-form-field [style.width.%]="100" appearance="outline">
     <mat-label>Portal Location</mat-label>
     <input (ngModelChange)="validateUrl($event, data)" matInput [(ngModel)]="data.url"
            class="charInput" autocomplete="off" [disabled]="!data.latLng === false">
+    <mat-icon matSuffix>cloud_download</mat-icon>
+    <mat-hint>Paste portal location here</mat-hint>
   </mat-form-field>
   </div>
 </div>
