@@ -12,7 +12,7 @@ export interface MsgDat {
 
 export interface CharDat{
   char: string;
-  uuid: string;
+  ingressName: string;
   time: string;
 }
 
@@ -23,13 +23,17 @@ export interface ColumnChar {
   guesses?: string;
   rawDataId: string;
   portalCount?: number;
+  portalsLength: number;
+  percentDone: number;
 }
 
-
 export interface ColumnRecData {
-  column: Column;
-  portalRecs?: PortalRec[];
-  columnChar?: ColumnChar;
+  rawDataId: string;
+  id: string; // _ColRec: <columnName>
+  column?: Column; // used for passing data - striped before save to db
+  portalRecs?: PortalRec[]; // used for passing data - striped before save to db
+  columnChar: ColumnChar;
+  ingressName?: string; // used for passing data - striped before save to db
 }
 
 export interface LatLng {
@@ -74,6 +78,13 @@ export interface RawData {
   columns?: Column[];
 }
 
+// March 13 2021 migrating to single project firebase collection
+export interface MetaData {
+  lastUpdate: string;
+  rawData: RawData;
+  rawDataId: string;
+  rawDataName: string;
+}
 
 // TODO columnCollection is no longer used - remove these items globally and test when time allows
 export interface PortalData {

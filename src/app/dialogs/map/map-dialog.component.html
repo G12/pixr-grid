@@ -1,24 +1,25 @@
-<p mat-dialog-title>Column {{columnRecData.column.name}}: {{portalCount}} portals
+<p *ngIf="columnRecData.columnChar.final" mat-dialog-title>Column {{columnRecData.column.name}}:
+  {{columnRecData.columnChar.portalsLength}} portals %{{columnRecData.columnChar.percentDone}} done
   Character: <strong>
-    {{columnRecData.columnChar.final}}</strong>
+    {{columnRecData.columnChar.final.char}}</strong>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i [style.font-size.em]=".7"
      *ngIf="columnRecData.columnChar.guesses &&
   columnRecData.columnChar.guesses.length > 0"> maybe? {{columnRecData.columnChar.guesses}}</i>
 </p>
 <div mat-dialog-content>
   <app-map *ngIf="columnRecData" [columnRecData]="columnRecData"></app-map>
-  <div class="map-form">
+  <div *ngIf="columnRecData" class="map-form">
     <mat-form-field [style.width.%]="48">
       <mat-label>Final Code Character</mat-label>
       <input (ngModelChange)="validateChar(columnRecData)"
-             matInput [(ngModel)]="columnRecData.columnChar.final"
+             matInput [(ngModel)]="final"
              class="charInput" autocomplete="off">
       <mat-hint>Enter the Final Code <strong>Character</strong> or <strong>Gliff</strong> here.</mat-hint>
     </mat-form-field>
     <mat-form-field [style.width.%]="48">
       <mat-label>Append a Suggestion</mat-label>
       <input (ngModelChange)="validateChar(columnRecData)"
-             matInput [(ngModel)]="columnRecData.columnChar.guesses"
+             matInput [(ngModel)]="guesses"
              class="charInput" autocomplete="off">
       <mat-hint>For example "H or 8 or K"</mat-hint>
     </mat-form-field>

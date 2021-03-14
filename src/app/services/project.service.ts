@@ -8,7 +8,7 @@ import {
   RawData,
   Messages,
   MsgDat,
-  ColumnChar
+  ColumnChar, ColumnRecData
 } from '../project.data';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
@@ -69,13 +69,23 @@ export class ProjectService {
   }
 
   ////////////////// disparate PortalRecCollection objects //////////////
+  setColumnRecData(columnRecData: ColumnRecData): void{
+    // console.log('columnRecData: ' + JSON.stringify(columnRecData));
+    this.firestore.collection(columnRecData.rawDataId).doc(columnRecData.id).set(columnRecData).then(value => {
+      // console.log('setportal return value: ' + JSON.stringify(value));
+    }).catch(reason => {
+      console.log('setColumnRecData ERROR reason: ' + JSON.stringify(reason));
+    });
+  }
+
+  ////////////////////////////////////////////  Not used
   setCodeChar(columnChar: ColumnChar): void{
-    console.log('setCodeChar ColumnChar: ' + JSON.stringify(columnChar));
+    // console.log('setCodeChar ColumnChar: ' + JSON.stringify(columnChar));
     // if (true) {return; }
     this.firestore.collection(columnChar.rawDataId).doc(columnChar.id).set(columnChar).then(value => {
       // console.log('setportal return value: ' + JSON.stringify(value));
     }).catch(reason => {
-      console.log('setPortal ERROR reason: ' + JSON.stringify(reason));
+      console.log('setCodeChar ERROR reason: ' + JSON.stringify(reason));
     });
   }
 

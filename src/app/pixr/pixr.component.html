@@ -33,27 +33,17 @@
       </div>
     </ng-template>
   </mat-expansion-panel>
-
   <div>
     <div class="header" [style.width.px]="width">
-      <div *ngIf="validated">
-        <div class="column" [style.width.px]="column.width"
-             *ngFor="let column of rawData.columns" (click)="showColumnInfo(column)">
-          <h1>Column {{column.name}}</h1>
+      <div *ngIf="dataReady && validated">
+        <div class="column" [style.width.px]="colRec.column.width"
+             *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
+          <h1>Column {{colRec.column.name}}</h1>
+          <div  *ngIf="colRec.columnChar">
+            <p *ngIf="colRec.columnChar.final">Code Character: <strong>{{colRec.columnChar.final.char}}</strong></p>
+            <p  *ngIf="colRec.columnChar.guesses">Suggestions: {{colRec.columnChar.guesses}}</p>
+          </div>
           <p>Click here for Portal Map</p>
-          <!-- TODO BAD performence on clickable element -->
-          <!--
-          <div *ngIf="isDone(column)">
-            <p>Column is complete</p>
-            <p>CHARACTER (under construction)</p>
-            <p>Click "here" to see Map.</p>
-          </div>
-          <div>
-            <p>Click on image below.</p>
-            <p>Enter portal url.</p>
-            <p>Click "here" to see Map.</p>
-          </div>
-          -->
         </div>
       </div>
     </div>
@@ -62,7 +52,4 @@
 </div>
 <img alt="IngressFS @home Password Challenge" class="myImage"
      #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)"
-      [width]="realWidth" [height]="realHeight"/>
-<!-- ngIf not really necessary
-<img class="myImage" *ngIf="!validated" #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)" />
--->
+     [width]="realWidth" [height]="realHeight"/>

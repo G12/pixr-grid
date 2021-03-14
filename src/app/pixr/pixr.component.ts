@@ -1,13 +1,13 @@
 import {AfterViewInit, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {
-  BootParam,
-  Column, ColumnChar,
+  BootParam, CharDat,
+  ColumnChar,
   ColumnRecData,
-  FirstSatProject,
   IngressNameData,
   LatLng,
   Messages,
+  MetaData,
   MsgDat,
   PortalRec,
   RawData
@@ -16,7 +16,6 @@ import {AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {Subscription} from 'rxjs';
 import {MapDialogComponent} from '../dialogs/map/map-dialog.component';
 
 // https://fevgames.net/ifs/ifsathome/2021-03/17631729871888592910113823558419958.jpg
@@ -63,14 +62,15 @@ export class PixrComponent implements OnInit, AfterViewInit {
   width: number;
   height: number;
   // Firestore data
-  firstSatProjectDoc: AngularFirestoreDocument; // copied from project.service
   rawDataDoc: AngularFirestoreDocument;
-  firstSatProject: FirstSatProject;
+  metaData: MetaData;
   rawData: RawData;
-  rawDataSubscription: Subscription;
   portalRecs: PortalRec[];
   logMessages: Messages;
   logMsgArray: MsgDat[];
+  columnRecDataArray: ColumnRecData[]; // gathers all recData objects according to column
+  colRecPrefix = '_ColRec:';
+  dataReady = false; // After all columnRecData has been initialized
 
   // Banner Info
   bannerInfo = '  @ anonymous arrived!';
@@ -101,57 +101,119 @@ export class PixrComponent implements OnInit, AfterViewInit {
       window.innerWidth - this.bannerLeftMargin - this.logoutButtonWidth);
   }
 
+  buildColumnRecDataArray(testColRec: ColumnRecData): void {
+    if (this.dataReady){ return; }
+    console.log('testColRec: ' + JSON.stringify(testColRec));
+    this.columnRecDataArray = [];
+    this.rawData.columns.forEach(column => {
+      // Build the PortalRec[] for this column
+      const portalRecs: PortalRec[] = [];
+      let portalCount = 0;
+      column.portals.forEach(portal => {
+        // get the portal rec for that
+        const prtlRecId = column.name + ':' + portal.index;
+        const test2 = this.portalRecs.find(
+          prtlrec => prtlrec.colName + ':' + prtlrec.index === prtlRecId);
+        if (test2) {
+          if (test2.status === this.P_FULL){
+            portalCount++;
+            console.log('portalCount: ' + portalCount + ' for ' + column.name);
+          }
+          portalRecs.push(test2);
+        } else {
+          // add a starter
+          const starter: PortalRec = {
+            id: column.name + ':' + portal.index,
+            index: portal.index,
+            colName: column.name,
+            rawDataId: this.rawData.id,
+            user: '', owner: '',
+            l: portal.l, t: portal.t, r: portal.r, b: portal.b
+          };
+          portalRecs.push(starter);
+        }
+      });
+      const percentDone = Math.round(portalCount / column.portals.length * 100);
+      let colRecData: ColumnRecData;
+      if (testColRec) {
+         // Find the corresponding ColumnRecData
+        const unknown: any = this.portalRecs.find(clrDat => clrDat.id === this.colRecPrefix + column.name);
+        if (unknown) {
+          const temp = unknown as ColumnRecData;
+          colRecData = {
+            rawDataId: this.rawData.id, columnChar: temp.columnChar, id: temp.id
+          };
+          colRecData.columnChar.portalCount = portalCount; // update the portal count
+          colRecData.columnChar.percentDone = percentDone;
+        } else {
+          console.log('unknown FAILED testColRec: ' + testColRec + ' at column: ' + column.name);
+        }
+      } else {
+        const final: CharDat = {char: '', time: '', ingressName: ''};
+        let columnChar: ColumnChar;
+        columnChar = {
+          id: '_CHAR:' + column.name, // unique identifier _CHAR: then column names A to P...
+          rawDataId: this.rawData.id,
+          portalsLength: column.portals.length,
+          guesses: '', final, portalCount, percentDone
+        };
+        colRecData = {
+          rawDataId: this.rawData.id, columnChar, id: this.colRecPrefix + column.name
+        };
+        this.projectService.setColumnRecData(colRecData);
+      }
+      // add the optional fields for passing data around
+      colRecData.column = column;
+      colRecData.portalRecs = portalRecs;
+      colRecData.ingressName = this.ingressName;
+      this.columnRecDataArray.push(colRecData);
+    });
+    this.dataReady = true;
+    // console.log('this.columnRecDataArray: ' + JSON.stringify(this.columnRecDataArray));
+  }
+
   ///////////////  initialization helper methods //////////////////////
-
-  subscribeToRawdataFor(id: string): void {
-    this.rawDataDoc = this.projectService.getRawDataDocRef(id);
-    this.rawDataSubscription = this.rawDataDoc.get().subscribe(doc => {
-      if (doc.exists) {
-        this.rawData = doc.data() as RawData;
-        this.logger('In rawDataSubscription - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
-        // this.width = this.rawData.displayWidth;
-        // this.bannerWidth = this.width;
-        // this.height = this.rawData.displayHeight;
-
-        // this.imgUrl = this.rawData.imgUrl;
-
-        // Subscribe to all the portalRec docs
-        this.projectService.getPortalRecs(id).subscribe(data => {
-          this.portalRecs = data.map(e => {
+  subscribeToFsProject(id: string): void {
+    // Subscribe to all the portalRec docs
+    this.projectService.getPortalRecs(id).subscribe(data => {
+      this.portalRecs = data.map(e => {
+        return {
+          id: e.payload.doc.id,
+          ...e.payload.doc.data()
+        } as PortalRec;
+      });
+      // Find the metadata
+      const test = this.portalRecs.find(pr => pr.id === '_metadata');
+      if (test) {
+        const unknown: any = test;
+        this.metaData = unknown as MetaData;
+        this.rawData = this.metaData.rawData;
+        this.logger('In subscribeToFsProject - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
+        this.projectService.getMsgLog(id).get().subscribe(doc2 => {
+          if (doc2.exists) {
+            this.logMessages = doc2.data() as Messages;
+            this.logMsgArray = this.logMessages.messages;
+          }
+        });
+        this.ingressNamesDoc = this.usersService.getUserDocs().subscribe(dat => {
+          this.allIngressNames = dat.map(e => {
             return {
               id: e.payload.doc.id,
               ...e.payload.doc.data()
-            } as PortalRec;
+            } as string[];
           });
-          this.projectService.getMsgLog(id).get().subscribe(doc2 => {
-            if (doc2.exists){
-              this.logMessages = doc2.data() as Messages;
-              this.logMsgArray = this.logMessages.messages;
-            }
-          });
-          this.ingressNamesDoc = this.usersService.getUserDocs().subscribe(dat => {
-            this.allIngressNames = dat.map(e => {
-              return {
-                id: e.payload.doc.id,
-                ...e.payload.doc.data()
-              } as string[];
-            });
-            // this.initImage(this.imgUrl);
-            this.drawPortalFrames();
-          });
+          console.log('TEST buildColumnRecDataArray() drawPortalFrames()');
+          this.drawPortalFrames();
+          // BIG NO NO overloaded the backend
+          // now we can initialize or get the column rec data
+          const colRec: any = this.portalRecs.find(prd => prd.id === this.colRecPrefix + 'A');
+          this.buildColumnRecDataArray(colRec);
         });
-      } else {
-        // doc.data() will be undefined in this case
       }
     });
   }
 
   ngAfterViewInit(): void {
-    // setTimeout(() => {
-    // this.initImage(this.imgUrl);
-    // this.initCanvas();
-      // this.bannerWidth = window.innerWidth;
-    // });
     // For client app first get image data from Firebase then
     // Get BootParam for fs_user then subscribe to default FirstSaturdayProj
     this.projectService.userBootParamDocRef.get().subscribe(data => {
@@ -160,8 +222,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
         const id = userBootParam.project_id;
         // const portalsCollectionName = userBootParam.portalCollectionName;
         // Once we have default project id we can subscribe
-        // this.subscribeToFirstSaturdayProj(id);
-        this.subscribeToRawdataFor(id);
+        // this.subscribeToRawdataFor(id); Deprecated
+        this.subscribeToFsProject(id);
       } else {
         // doc.data() will be undefined in this case
       }
@@ -183,7 +245,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
     this.canvas = this.canvasEl.nativeElement;
     this.ctx = this.canvas.getContext('2d');
     this.logger('Browser Dimensions: ' + this.width + ' x ' + this.height +
-                ' and Real Dimensions' + this.realWidth + ' x ' + this.realHeight);
+      ' and Real Dimensions' + this.realWidth + ' x ' + this.realHeight);
     if (this.width !== this.realWidth) {
       this.width = this.realWidth;
       this.height = this.realHeight;
@@ -280,22 +342,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
     }
   }
 
-  /*
-  getLatestRawData(): void {
-    this.rawDataDoc.get().subscribe(doc => {
-      if (doc.exists) {
-        // console.log('defaultRawData: ' + JSON.stringify(doc.data()));
-        this.rawData = doc.data() as RawData;
-        this.logger('In getLatestRawData - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
-        return true;
-        // this.drawPortalFrames();
-      } else {
-        return false;
-      }
-    });
-  }
-   */
-
   /// Mouse Events ( after canvas initialized
   handleMouseDown(e): void {
     if (!this.busy) {
@@ -334,8 +380,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
                 const src = this.projectService.clipboard.colName + ':' +
                   this.projectService.clipboard.index;
                 const dest = dlgData.colName + ':' + dlgData.index;
-                if (confirm('Do you want to PASTE:' + src + ' to ' + dest))
-                {
+                if (confirm('Do you want to PASTE:' + src + ' to ' + dest)) {
                   canOpen = false;
                   dlgData.url = this.projectService.clipboard.url;
                   dlgData.latLng = this.projectService.clipboard.latLng;
@@ -349,7 +394,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
                   this.projectService.setLogMsg(
                     this.rawData.id,
                     this.ingressName + ' Pasted ' + src + ' to ' + dest,
-                    dlgData );
+                    dlgData);
                 } else {
                   canOpen = true;
                 }
@@ -411,8 +456,12 @@ export class PixrComponent implements OnInit, AfterViewInit {
       this.initCanvas();
       this.bannerInfo = '  @ ' + name + ' started working!' + this.bannerInfo;
       if (this.rawData) {
-        this.projectService.setLogMsg( this.rawData.id,
+        this.projectService.setLogMsg(this.rawData.id,
           this.ingressName + ' Logged In', null);
+
+        // once we have the portal recs we can build the ColumnRecData array
+        // this.buildColumnRecDataArray();
+
       }
     }
   }
@@ -437,37 +486,38 @@ export class PixrComponent implements OnInit, AfterViewInit {
     }
   }
 
-  isDone(column: Column): boolean {
-    const charId = '_CHAR:' + column.name;
-    const test: ColumnChar = this.portalRecs.find(cr => cr.id === charId);
-    console.log('ColumnChar: ' + JSON.stringify(test));
-    if (test && test.final) {
-      const name = this.allIngressNames.find((element => element.userUid === test.final.uuid));
-      if (name) {
-        return test.final.char.length > 0;
-      }
-    }
-    return false;
+  showColumnInfo(columnRecData: ColumnRecData): void {
+    // Pass the ingressName in to assign to ColumnChar.final if final Letter is picked
+    // check to see if value for letter is being changed and change owner
+    columnRecData.ingressName = this.ingressName;
+    this.openMapDialog(columnRecData);
   }
 
-  showColumnInfo(column: Column): void {
-    const portalCount = column.portals.length;
-    const colRecData: ColumnRecData = {column, portalRecs: []};
+  /*
+  XshowColumnInfo(column: Column): void {
+    // TODO see above for proposed update to this method
+    const ingressName = this.ingressName;
+    const portalsLength = column.portals.length;
+    const colRecData: ColumnRecData = {
+      rawDataId: this.rawData.id, column,
+      portalRecs: [], ingressName, id: column.name};
     this.portalRecs.forEach(prtl => {
       if (column.name === prtl.colName) {
         colRecData.portalRecs.push(prtl);
       }
     });
     const charId = '_CHAR:' + column.name;
-    let test: ColumnChar = this.portalRecs.find(cr => cr.id === charId);
-    if (!test) {
-      const unknown: any = {
-        rawDataId: this.rawData.id, id: charId, guesses: '', final: '', portalCount};
-      test = unknown as ColumnChar;
+    const test: any = this.portalRecs.find(cr => cr.id === charId);
+    let colChar = test as ColumnChar;
+    if (!colChar) {
+      const final = {char: '', ingressName: '', time: ''};
+      colChar = {rawDataId: this.rawData.id, id: charId,
+        guesses: '', final, portalsLength};
     }
-    colRecData.columnChar = test;
+    colRecData.columnChar = colChar;
     this.openMapDialog(colRecData);
   }
+   */
 
   isValidURL(url: string): boolean {
     return (-1 !== url.indexOf('https://intel.ingress.com/intel?', 0));
@@ -641,7 +691,7 @@ export class PortalInfoDialogComponent {
   eraseData(data: PortalRec): void {
     if (confirm('Do you really wan to ERASE?')) {
       const msg = data.user + ' Erased ' + data.colName + ':' + data.index
-          + ' owner: ' + data.owner;
+        + ' owner: ' + data.owner;
       this.projectService.setLogMsg(data.rawDataId, msg, null);
       data.owner = '';
       data.latLng = null;
@@ -652,20 +702,11 @@ export class PortalInfoDialogComponent {
 
   setClipboard(data: PortalRec): void {
     this.projectService.clipboard = data;
-    /*
-    const name = prompt('Enter a name to identify clipboard object', '');
-    if (name !== '') {
-      data.name = name;
-      this.projectService.clipboard = data;
-      console.log('Clipboard: ' + this.projectService.clipboard);
-    }else{
-      alert('A name is required to identify the object you wish to paste!');
-    }*/
   }
 
   clearAllMessages(data: PortalRec): void {
-    if (data.user === 'G12mo'){
-      if (confirm('CLEAR_ALL_MESSAGES')){
+    if (data.user === 'G12mo') {
+      if (confirm('CLEAR_ALL_MESSAGES')) {
         this.projectService.setLogMsg(data.rawDataId, 'CLEAR_ALL_MESSAGES', data);
       }
     }

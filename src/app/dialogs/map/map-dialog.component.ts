@@ -8,27 +8,45 @@ import {ProjectService} from '../../services/project.service';
   templateUrl: 'map-dialog.component.html',
 })
 export class MapDialogComponent {
-  portalCount = 0;
+  final = '';
+  guesses = '';
   constructor(
     public dialogRef: MatDialogRef<MapDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public columnRecData: ColumnRecData,
     public projectService: ProjectService) {
-    this.portalCount = columnRecData.columnChar.portalCount;
+      if (columnRecData.columnChar.final) {
+        this.final = columnRecData.columnChar.final.char;
+      }
+      if (columnRecData.columnChar.guesses) {
+        this.guesses = columnRecData.columnChar.guesses;
+      }
   }
 
    onOkClick(result: ColumnRecData): void {
      if (result) {
+       const template: ColumnRecData = {
+         rawDataId: result.rawDataId,
+         id: result.id,
+         columnChar: result.columnChar,
+       };
+       if (this.final !== result.columnChar.final.char)
+       {
+         template.columnChar.final.char = this.final;
+         template.columnChar.final.ingressName = result.ingressName;
+         template.columnChar.final.time = JSON.stringify(new Date());
+       }
+       if (this.guesses !== result.columnChar.guesses){
+         template.columnChar.guesses = this.guesses;
+       }
        this.dialogRef.close();
-       const colRecData: ColumnRecData = result;
-       console.log('MapDialogComponent onOkClick result: ' + JSON.stringify(colRecData.columnChar));
-       this.projectService.setCodeChar(colRecData.columnChar);
+       this.projectService.setColumnRecData(template);
      } else {
        this.dialogRef.close();
      }
   }
 
   validateChar(columnRecData: ColumnRecData): void {
-
+    const test = columnRecData;
   }
 }
 
