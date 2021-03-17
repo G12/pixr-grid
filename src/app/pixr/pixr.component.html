@@ -1,5 +1,5 @@
 <button *ngIf="authService.afAuth.user"
-        class="btnLogout" [style.left.px]="left"
+        class="btnLogout" [style.left.px]="pageXOffset"
         mat-mini-fab aria-label="logout"
         (click)="logout()">
   <mat-icon>logout</mat-icon>
@@ -19,7 +19,6 @@
         &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <p class="logBuffer" *ngIf="this.ingressName === 'G12mo'">{{logBuffer}}</p>
     <div *ngIf="!validated; else Content" class="example-button-row">
       <h1 *ngIf="rawData">{{rawData.name}}</h1>
       <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
@@ -29,11 +28,17 @@
     </div>
     <ng-template #Content>
       <div class="content">
-        <h1>Tap on a Portal Image: enter Portal Name and Location </h1>
+        <h1>This area is Under Construction</h1>
+        <button *ngIf="this.ingressName === 'G12mo'" mat-raised-button color="warn"
+                (click)="clearAllMessages()">
+          Clear All Messages!
+        </button>
+        <p class="logBuffer" *ngIf="this.ingressName === 'G12mo'">Log Messages: [{{logBuffer}}]</p>
       </div>
     </ng-template>
   </mat-expansion-panel>
   <div>
+    <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
     <div class="header" [style.width.px]="width">
       <div *ngIf="dataReady && validated">
         <div class="column" [style.width.px]="colRec.column.width"

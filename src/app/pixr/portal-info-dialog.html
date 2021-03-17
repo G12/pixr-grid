@@ -1,68 +1,65 @@
-<!--<p mat-dialog-title>Column {{data.name}}: {{data.index}}</p>-->
 <div mat-dialog-actions align="end">
   <button *ngIf="data.latLng" mat-raised-button color="warn"
-          (click)="eraseData(data)">ERASE</button>
-  <!--CLEAR_ALL_MESSAGES-->
-  <button *ngIf="data.user === 'G12mo'" mat-raised-button color="warn"
-          (click)="clearAllMessages(data)">CLEAR_ALL_MESSAGES</button>
-  <button *ngIf="projectService.clipboard" (click)="projectService.clipboard = null">
-      Clear Clipboard
+          (click)="eraseData(data)">DELETE!
   </button>
-  <button *ngIf="!projectService.clipboard && data.latLng" mat-raised-button color="accent"
-          (click)="setClipboard(data)">Copy</button>
 </div>
-<p mat-dialog-title>Column {{data.colName}}: {{data.index}}</p>
+<p mat-dialog-title>Column {{data.colName}}: {{data.index}}
+  <span *ngIf="data.owner">Discovered by: <strong>{{data.owner}}</strong></span>
+</p>
 <div mat-dialog-content>
   <div>
-  <!--  NAME FIELD ----  Obsolete until requested or needed
-  <mat-form-field [style.width.%]="90">
-    <mat-label>Portal Name (optional!)</mat-label>
-    <input matInput [(ngModel)]="data.name">
-  </mat-form-field>
-  </div>
-  <div>
-  -->
-
-    <h4>Basic use</h4>
+    <h1>Basic use</h1>
     <div *ngIf="data.latLng">
-    <p>After the portal location has been found, you can copy it and paste where
-      you see duplicate images.</p>
+      <p *ngIf="!projectService.clipboard">After the portal has been found, you can
+        <button mat-raised-button color="accent" (click)="setClipboard(data)">Copy</button>
+        and paste where you see duplicate images.
+      </p>
+      <p *ngIf="projectService.clipboard">
+        Finished Pasting Copies then <button (click)="projectService.clipboard = null">
+          Clear the Clipboard
+        </button>
+      </p>
     </div>
     <ul>
-      <li *ngIf="!data.latLng">If you <strong>Know Where</strong> the portal is
-        go to the intel map and copy the link</li>
-      <li *ngIf="!data.latLng"><button mat-raised-button color="primary" (click)="searchIntelMap()">
-        Intel Map.</button></li>
+      <li *ngIf="!data.latLng"><strong>Know Where</strong> the portal is
+        go to the Intel Map to get the link
+      </li>
+      <li *ngIf="!data.latLng">
+        <button mat-raised-button color="primary" (click)="searchIntelMap()">
+          Intel Map.
+        </button>
+      </li>
       <li *ngIf="!data.latLng"><strong>Don't know the location:</strong> use the
         <button mat-button color="primary" (click)="openMissionTool()">
-          Mission Authoring Tool</button></li>
-      <li *ngIf="!data.latLng">Create a new mission then use the Search titles and descriptions input
-        to help you find the location; then go to the intel map to copy the link (as above).
+          Mission Authoring Tool
+        </button>
       </li>
-      <li *ngIf="data.latLng">if you think this location is <strong>Incorrect?</strong></li>
-      <li *ngIf="data.latLng"><button   mat-raised-button color="primary" (click)="openIntelMap(data)">
-        Check on the Intel Map</button></li>
+      <li *ngIf="!data.latLng">
+        Create a new mission - Search titles and descriptions then go to the Intel Map (above) to get the link.
+      </li>
+      <li *ngIf="data.latLng"><strong>Think</strong> this location is <strong>Incorrect?</strong>:
+        <button mat-raised-button color="primary" (click)="openIntelMap(data)">
+          Check on the Intel Map
+        </button>
+      </li>
     </ul>
     <div *ngIf="!data.latLng">
-      <p>Paste Locatiion <i [style.font-size.em]=".9">https://intel.ingress.com/intel?ll=45,-75&z=15</i></p>
-      <p>in the field below.
-    </p>
+      <p>Location must be in this format: <i [style.font-size.em]=".9">https://intel.ingress.com/intel?ll=45,-75&z=15</i></p>
+      <p>Paste in the field below.
+      </p>
     </div>
-    <p *ngIf="data.latLng">Portal discovered by <strong>{{data.owner}}</strong></p>
-    <p *ngIf="data.latLng">If you think this location is Incorrect: <strong>Erase</strong> the portal to enter a new value.</p>
+    <p *ngIf="data.latLng">If you <strong>KNOW</strong> this location is Incorrect:
+      <strong>DELETE</strong> to enter a new value!</p>
     <p class="inputWarning">{{data.msg}}</p>
-  <mat-form-field [style.width.%]="100" appearance="outline">
-    <mat-label>Portal Location</mat-label>
-    <input (ngModelChange)="validateUrl($event, data)" matInput [(ngModel)]="data.url"
-           class="charInput" autocomplete="off" [disabled]="!data.latLng === false">
-    <mat-icon matSuffix>cloud_download</mat-icon>
-    <mat-hint>Paste portal location here</mat-hint>
-  </mat-form-field>
+    <mat-form-field [style.width.%]="100" appearance="outline">
+      <mat-label>Portal Location</mat-label>
+      <input (ngModelChange)="validateUrl($event, data)" matInput [(ngModel)]="data.url"
+             class="charInput" autocomplete="off" [disabled]="!data.latLng === false">
+      <mat-icon matSuffix>cloud_download</mat-icon>
+      <mat-hint>Paste portal location here</mat-hint>
+    </mat-form-field>
   </div>
 </div>
 <div mat-dialog-actions align="end">
-  <!-- NOTE Save Portal Data button is no longer necessary
-        we validate the url and close automatically when a valid url is entered -->
-  <!--<button mat-button [mat-dialog-close]="data">Save Portal Data</button>-->
   <button mat-button (click)="onCancelClick()">Cancel</button>
 </div>

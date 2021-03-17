@@ -25,5 +25,9 @@
   </div>
 </div>
 <div mat-dialog-actions align="end">
-  <button mat-button (click)="onOkClick(columnRecData)">Ok</button>
+  <button *ngIf="final !== columnRecData.columnChar.final.char ||
+          notes !== columnRecData.columnChar.notes"
+          mat-raised-button color="primary"
+          (click)="onOkClick(columnRecData)">Save</button>
+  <button mat-button [mat-dialog-close]="true">Cancel</button>
 </div>

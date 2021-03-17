@@ -89,6 +89,10 @@ export class ProjectService {
     });
   }
 
+  clearLog(rawDatId: string): void {
+    this.firestore.collection(rawDatId).doc('_MsgLog').set({messages: []});
+  }
+
   setLogMsg(rawDatId: string, msg: string, prtlRec: PortalRec): void{
     this.firestore.collection(rawDatId).doc('_MsgLog').get().subscribe(document => {
       const time = JSON.stringify(new Date());

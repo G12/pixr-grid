@@ -10,6 +10,7 @@ import {PixrComponent, PortalInfoDialogComponent} from './pixr/pixr.component';
 import {FormsModule} from '@angular/forms';
 import { MapDialogComponent } from './dialogs/map/map-dialog.component';
 import {MapComponent} from './map/map.component';
+import { SpeedDialComponent } from './components/speed-dial/speed-dial.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import {MapComponent} from './map/map.component';
     PixrComponent,
     PortalInfoDialogComponent,
     MapDialogComponent,
-    MapComponent
+    MapComponent,
+    SpeedDialComponent
   ],
   imports: [
     BrowserModule,
