@@ -14,12 +14,12 @@
         <button mat-raised-button color="accent" (click)="setClipboard(data)">Copy</button>
         and paste where you see duplicate images.
       </p>
-      <p *ngIf="projectService.clipboard">
-        Finished Pasting Copies then <button (click)="projectService.clipboard = null">
-          Clear the Clipboard
-        </button>
-      </p>
     </div>
+    <p *ngIf="projectService.clipboard">
+      Finished Pasting Copies then <button (click)="projectService.clipboard = null">
+      Clear the Clipboard
+    </button>
+    </p>
     <ul>
       <li *ngIf="!data.latLng"><strong>Know Where</strong> the portal is
         go to the Intel Map to get the link
@@ -61,5 +61,5 @@
   </div>
 </div>
 <div mat-dialog-actions align="end">
-  <button mat-button (click)="onCancelClick()">Cancel</button>
+  <button mat-button (click)="onCancelClick(data)">Cancel</button>
 </div>

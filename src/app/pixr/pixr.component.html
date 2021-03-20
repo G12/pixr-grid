@@ -41,7 +41,7 @@
     <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
     <div class="header" [style.width.px]="width">
       <div *ngIf="dataReady && validated">
-        <div class="column" [style.width.px]="colRec.column.width"
+        <div [id]="colRec.column.name" class="column" [style.width.px]="colRec.column.width"
              *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
           <h1 class="overflow">Column {{colRec.column.name}}: {{colRec.columnChar.portalsLength}} portals</h1>
           <h1 class="overflow">Letter <strong>{{colRec.columnChar.final.char}}</strong>
@@ -68,9 +68,14 @@
         </div>
       </div>
     </div>
-    <canvas class="canvasAttr" #canvasEl [width]="width" [height]="height"></canvas>
+    <canvas class="canvasAttr" #canvasEl [width]="width" [height]="height">
+      Loading Data please wait. Reload page if this takes too long!
+    </canvas>
   </div>
 </div>
-<img alt="IngressFS @home Password Challenge" class="myImage"
-     #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)"
+<img *ngIf="src" alt="IngressFS @home Password Challenge" class="myImage"
+     #myImage [src]="this.src" (load)="onImageLoad(myImage)"
      [width]="realWidth" [height]="realHeight"/>
+<!--<img alt="IngressFS @home Password Challenge" class="myImage"
+     #myImage [src]="this.imgUrl" (load)="onImageLoad(myImage)"
+     [width]="realWidth" [height]="realHeight"/>-->

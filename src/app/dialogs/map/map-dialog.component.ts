@@ -41,13 +41,35 @@ export class MapDialogComponent {
        }
        this.dialogRef.close();
        this.projectService.setColumnRecData(template);
+
+       // Scroll into view
+       const target = document.getElementById(result.column.name);
+       target.scrollIntoView();
+       // Try to scroll into view vertically
+       window.scrollTo({
+         top: 0
+       });
+
      } else {
+       // Should never Get here
+       console.log('mapDialogComponent onOkClick NO result');
        this.dialogRef.close();
      }
-  }
+   }
 
   validateChar(columnRecData: ColumnRecData): void {
     const test = columnRecData;
+  }
+
+  onCancelClick(data: ColumnRecData): void {
+    this.dialogRef.close();
+    // Scroll into view
+    const target = document.getElementById(data.column.name);
+    target.scrollIntoView();
+    // Try to scroll into view vertically
+    window.scrollTo({
+      top: 0
+    });
   }
 }
 

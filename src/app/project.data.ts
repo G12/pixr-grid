@@ -139,6 +139,7 @@ export interface FirstSatProject {
 export interface BootParam {
   id?: string;
   project_id?: string;
+  folder?: string;
   portalCollectionName?: string;
   admin_list?: string[];
 }

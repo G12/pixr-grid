@@ -29,5 +29,11 @@
           notes !== columnRecData.columnChar.notes"
           mat-raised-button color="primary"
           (click)="onOkClick(columnRecData)">Save</button>
-  <button mat-button [mat-dialog-close]="true">Cancel</button>
+  <!--<button mat-button [mat-dialog-close]="true">Cancel</button>-->
+  <button mat-button (click)="onCancelClick(columnRecData)">
+    <span *ngIf="final !== columnRecData.columnChar.final.char ||
+    notes !== columnRecData.columnChar.notes">Cancel</span>
+    <span *ngIf="final === columnRecData.columnChar.final.char &&
+    notes === columnRecData.columnChar.notes">Ok</span>
+  </button>
 </div>

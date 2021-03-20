@@ -1,4 +1,4 @@
-import {AfterViewInit, ApplicationRef, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {
   BootParam,
@@ -58,8 +58,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
   //////////////////////////  Hard Code ZONE Caution
   // TODO someday have an upload service for this
-  imgUrl = 'assets/FirstSatBlackSmall.jpg'; // 'assets/FirstSatBlack.jpg';
+  // imgUrl = 'assets/FirstSatBlackSmall.jpg'; // 'assets/FirstSatBlack.jpg';
   // imgUrl: string; // assigned after project data aquired from Firebase
+  src: string; // TODO make constants for = 'https://geopad.ca/fs_pics/' + folder + '/black.jpg';
   realWidth = 4887;
   realHeight = 2699;
   logBuffer = '';
@@ -100,8 +101,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   constructor(public authService: AuthService,
               private projectService: ProjectService,
               private usersService: UsersService,
-              public dialog: MatDialog,
-              private appRef: ApplicationRef) {
+              public dialog: MatDialog) {
     this.rawData = {id: '', name: '', columns: []};
   }
 
@@ -194,7 +194,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
       this.columnRecDataArray.push(colRecData);
       this.dataReady = true;
     });
-    console.log('TESTING TESTING DataReady');
+    // console.log('TESTING TESTING DataReady');
     this.dataReady = true;
   }
 
@@ -228,7 +228,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
               ...e.payload.doc.data()
             } as string[];
           });
-          console.log('TEST drawPortalFrames() and buildColumnRecDataArray()');
+          // console.log('TEST drawPortalFrames() and buildColumnRecDataArray()');
           this.drawPortalFrames();
           this.buildColumnRecDataArray();
         });
@@ -243,6 +243,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
       if (data.exists) {
         const userBootParam = data.data() as BootParam;
         const id = userBootParam.project_id;
+        const folder = userBootParam.folder;
+        this.src = 'https://geopad.ca/fs_pics/' + folder + '/black.jpg';
+        console.log('src = ' + this.src);
         // const portalsCollectionName = userBootParam.portalCollectionName;
         // Once we have default project id we can subscribe
         // this.subscribeToRawdataFor(id); Deprecated
@@ -440,7 +443,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
                 dlgData.user = this.ingressName;
                 this.lastXOffset = this.pageXOffset;
                 this.lastYOffset = this.pageYOffset;
-                this.openPortalDialog(dlgData); // send event to open dialog ???
+                this.openPortalDialog(dlgData); // send event to open dialog
                 this.busy = false;
               }
               return;
@@ -452,7 +455,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
         canDrag = true;
       });
       if (canDrag) {
-        console.log('CAN DRAG');
+        // console.log('CAN DRAG');
       }
     }
     this.busy = false;
@@ -524,8 +527,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
     this.ctx.stroke();
   }
 
+  // Get x and y even if canvas bounds x and y have been adjusted ie making a slice
   private getXY(event: MouseEvent): any {
-    // this.imgData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     const rect = this.canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -648,11 +651,17 @@ export class PixrComponent implements OnInit, AfterViewInit {
         }
         this.projectService.setPortalRec(this.rawData.id, path, prtl);
         this.updatePortalRecs(prtl);
+
+        // Scroll into view
+        const target = document.getElementById(prtl.colName);
+        target.scrollIntoView();
+        // Try to scroll into view vertically
+        window.scrollTo({
+          // top: this.lastYOffset,
+          top: prtl.t
+        });
+
       }
-      window.scrollTo({
-        top: this.lastYOffset,
-        left: this.lastXOffset
-      });
     });
   }
 
@@ -665,13 +674,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // Cancel Click response
       } else {
       }
-      window.scrollTo({
-        top: this.lastYOffset,
-        left: this.lastXOffset
-      });
     });
   }
 
@@ -739,8 +743,15 @@ export class PortalInfoDialogComponent {
               public projectService: ProjectService) {
   }
 
-  onCancelClick(): void {
+  onCancelClick(data: PortalRec): void {
     this.dialogRef.close();
+    // Scroll into view
+    const target = document.getElementById(data.colName);
+    target.scrollIntoView();
+    // Try to scroll into view vertically
+    window.scrollTo({
+      top: data.t,
+    });
   }
 
   // TODO this is not usefull right now could be usefull for standalone dialog component
@@ -772,6 +783,13 @@ export class PortalInfoDialogComponent {
   validateUrl(url: string, data: PortalRec): void {
     if (this.isValidURL(url)) {
       this.dialogRef.close(data);
+      // Scroll into view
+      const target = document.getElementById(data.colName);
+      target.scrollIntoView();
+      // Try to scroll into view vertically
+      window.scrollTo({
+        top: data.t,
+      });
     } else {
       data.msg = 'Not a Valid intel URL!';
     }
@@ -786,12 +804,26 @@ export class PortalInfoDialogComponent {
       data.latLng = null;
       data.url = '';
       this.dialogRef.close(data);
+      // Scroll into view
+      const target = document.getElementById(data.colName);
+      target.scrollIntoView();
+      // Try to scroll into view vertically
+      window.scrollTo({
+        top: data.t,
+      });
     }
   }
 
   setClipboard(data: PortalRec): void {
     this.projectService.clipboard = data;
     this.dialogRef.close(data);
+    // Scroll into view
+    const target = document.getElementById(data.colName);
+    target.scrollIntoView();
+    // Try to scroll into view vertically
+    window.scrollTo({
+      top: data.t,
+    });
   }
 
 }
