@@ -1,6 +1,7 @@
 import {AfterViewInit, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {
+  AdminList,
   BootParam,
   CharDat,
   ColumnChar,
@@ -61,8 +62,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
   // imgUrl = 'assets/FirstSatBlackSmall.jpg'; // 'assets/FirstSatBlack.jpg';
   // imgUrl: string; // assigned after project data aquired from Firebase
   src: string; // TODO make constants for = 'https://geopad.ca/fs_pics/' + folder + '/black.jpg';
-  realWidth = 4887;
-  realHeight = 2699;
+  path = 'https://geopad.ca/fs_pics/';
+  // realWidth = 4887;
+  // realHeight = 2699;
   logBuffer = '';
   ///////////////////////////////////////////////////
 
@@ -97,6 +99,13 @@ export class PixrComponent implements OnInit, AfterViewInit {
   // dialogData: DialogData = {id: '', name: '', url: '', latLng: null, columnName: '', portalIndex: null};
   private portalDialogRef: MatDialogRef<PortalInfoDialogComponent, PortalRec>;
   validated = false; // After user sets ingress name set true and shoe images
+
+  //////////////////////////// user info /////////////////////////////
+  googleUID: string;
+  isAdmin = false;
+  adminList: AdminList;
+  fsUser: BootParam;
+  fsAdmin: BootParam;
 
   constructor(public authService: AuthService,
               private projectService: ProjectService,
@@ -162,6 +171,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
           };
           colRecData.columnChar.portalCount = portalCount; // update the portal count
           colRecData.columnChar.percentDone = percentDone;
+          colRecData.columnChar.portalsLength = column.portals.length;
         } else {
           console.log('unknown FAILED testColRec: ' + testColRec + ' at column: ' + column.name);
         }
@@ -236,15 +246,52 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
   }
 
+  getBootParams(): void {
+    // TODO add UI procedure for assigning admin status this.setAdmin('G12mo', '1KYU0BdE0rXTly5Y5KZslOvxpow2');
+    this.projectService.bootParamsCollection.get().subscribe(data => {
+      if (!data.empty) {
+        const admlst = data.docs.find(d => d.id === 'admin_list');
+        if (admlst) {
+          this.adminList = admlst.data() as AdminList;
+        }
+        const usr = data.docs.find(d => d.id === 'fs_user');
+        if (usr) {
+          this.fsUser = usr.data() as BootParam;
+        }
+        const adm = data.docs.find(d => d.id === 'fs_admin');
+        if (adm) {
+          this.fsAdmin = adm.data() as BootParam;
+        }
+        const test = this.adminList.admins.find(a => a.uid === this.googleUID);
+        this.isAdmin = !!test;
+        let id; let folder;
+        if (this.isAdmin) {
+          id = this.fsAdmin.project_id;
+          folder = this.fsAdmin.folder;
+        } else {
+          id = this.fsUser.project_id;
+          folder = this.fsUser.folder;
+        }
+        this.src = this.path + folder + '/black.jpg';
+        console.log('src = ' + this.src);
+        // Once we have default project id we can subscribe
+        // this.subscribeToRawdataFor(id); Deprecated
+        this.subscribeToFsProject(id);
+      }
+    });
+  }
+
   ngAfterViewInit(): void {
+    this.getBootParams();
     // For client app first get image data from Firebase then
     // Get BootParam for fs_user then subscribe to default FirstSaturdayProj
+    /*
     this.projectService.userBootParamDocRef.get().subscribe(data => {
       if (data.exists) {
         const userBootParam = data.data() as BootParam;
         const id = userBootParam.project_id;
         const folder = userBootParam.folder;
-        this.src = 'https://geopad.ca/fs_pics/' + folder + '/black.jpg';
+        this.src = this.path + folder + '/black.jpg';
         console.log('src = ' + this.src);
         // const portalsCollectionName = userBootParam.portalCollectionName;
         // Once we have default project id we can subscribe
@@ -254,14 +301,18 @@ export class PixrComponent implements OnInit, AfterViewInit {
         // doc.data() will be undefined in this case
       }
     });
+     */
   }
 
   ngOnInit(): void {
+    this.authService.afAuth.currentUser.then(value => {
+      this.googleUID = value.uid;
+    });
   }
 
   onImageLoad(myImage: HTMLImageElement): void {
-    this.width = myImage.width;
-    this.height = myImage.height;
+    this.width = myImage.naturalWidth; // myImage.width;
+    this.height = myImage.naturalHeight; // myImage.height;
     this.img = myImage;
     this.bannerWidth = this.width;
   }
@@ -270,12 +321,14 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
     this.canvas = this.canvasEl.nativeElement;
     this.ctx = this.canvas.getContext('2d');
+    /*
     this.logger('Browser Dimensions: ' + this.width + ' x ' + this.height +
       ' and Real Dimensions' + this.realWidth + ' x ' + this.realHeight);
     if (this.width !== this.realWidth) {
       this.width = this.realWidth;
       this.height = this.realHeight;
     }
+     */
     this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
     // MOUSE MOVE EVENT
     this.canvas.addEventListener('mousemove', (event): any => {

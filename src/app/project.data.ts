@@ -136,6 +136,7 @@ export interface FirstSatProject {
 }
 
 // NOTE all fields are optional since firebase returns unknown TODO more research needed here
+/*
 export interface BootParam {
   id?: string;
   project_id?: string;
@@ -147,9 +148,25 @@ export interface BootParam {
 export interface BootParams {
   bootParams: BootParam[];
 }
+*/
 
 export interface IngressNameData {
   userUid: string;
   name: string;
+}
+
+//////////////////////// User and security Boot Params
+export interface Admin {
+  uid: string;
+  name: string;
+}
+
+export interface AdminList {
+  admins: Admin[];
+}
+
+export interface BootParam {
+  project_id?: string;
+  folder?: string;
 }
 

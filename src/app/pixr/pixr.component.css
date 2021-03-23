@@ -57,7 +57,7 @@
 }
 .canvasAttr {
   margin: 0;
-  border: black solid 2px;
+  /* border: black solid 2px; */
   overflow: hidden;
 }
 .example-label {

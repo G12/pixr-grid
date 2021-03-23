@@ -10,7 +10,7 @@ import {
   MsgDat,
   ColumnChar, ColumnRecData
 } from '../project.data';
-import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
+import {AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Observable} from 'rxjs';
 import {Action, DocumentSnapshot} from '@angular/fire/firestore/interfaces';
 
@@ -48,6 +48,7 @@ export class ProjectService {
   adminBootParamDocRef: AngularFirestoreDocument;
   firstSatProjectDocRef: AngularFirestoreDocument;
   rawDataDocRef: AngularFirestoreDocument;
+  bootParamsCollection: AngularFirestoreCollection;
 
   constructor(private firestore: AngularFirestore) {
     // this.columnData.portals = this.portals;
@@ -58,6 +59,7 @@ export class ProjectService {
     // get a reference to the AngularFirestoreDocuments
     this.userBootParamDocRef = this.firestore.collection('fs_boot_params').doc('fs_user');
     this.adminBootParamDocRef = this.firestore.collection('fs_boot_params').doc('fs_admin');
+    this.bootParamsCollection = this.firestore.collection('fs_boot_params');
     ///////////////////////////   Boot Up  //////////////////////////
 
   }
