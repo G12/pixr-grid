@@ -59,7 +59,9 @@
       <mat-hint>Paste portal location here</mat-hint>
     </mat-form-field>
   </div>
+  <app-canvas [portalRec]="data"></app-canvas>
 </div>
 <div mat-dialog-actions align="end">
   <button mat-button (click)="onCancelClick(data)">Cancel</button>
 </div>
+

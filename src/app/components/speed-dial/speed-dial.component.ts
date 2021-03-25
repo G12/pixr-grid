@@ -11,16 +11,16 @@ export class SpeedDialComponent implements OnInit {
 
   fabButtons = [
     {
-      icon: '+',
-      action: 'plus'
+      icon: 'file_download',
+      action: 'miny'
     },
     {
-      icon: '-',
+      icon: 'drag_handle',
       action: 'minus'
     },
     {
-      icon: 'view_in_ar',
-      action: 'scroll'
+      icon: 'file_upload',
+      action: 'plus'
     }
   ];
   buttons = [];

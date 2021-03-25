@@ -11,6 +11,7 @@ import {FormsModule} from '@angular/forms';
 import { MapDialogComponent } from './dialogs/map/map-dialog.component';
 import {MapComponent} from './map/map.component';
 import { SpeedDialComponent } from './components/speed-dial/speed-dial.component';
+import { CanvasComponent } from './components/canvas/canvas.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { SpeedDialComponent } from './components/speed-dial/speed-dial.component
     PortalInfoDialogComponent,
     MapDialogComponent,
     MapComponent,
-    SpeedDialComponent
+    SpeedDialComponent,
+    CanvasComponent
   ],
   imports: [
     BrowserModule,

@@ -58,6 +58,8 @@ export interface PortalRec {
   url?: string;
   latLng?: LatLng;
   msg?: string;
+  ctx?: CanvasRenderingContext2D;
+  scale?: number;
 }
 
 export interface Column{

@@ -34,19 +34,27 @@
           Clear All Messages!
         </button>
         <p class="logBuffer" *ngIf="isAdmin">Log Messages: [{{logBuffer}}]</p>
-        <!--<button *ngIf="this.ingressName === 'G12mo'" mat-raised-button color="warn"
-                (click)="clearAllMessages()">
-          Clear All Messages!
-        </button>
-        <p class="logBuffer" *ngIf="this.ingressName === 'G12mo'">Log Messages: [{{logBuffer}}]</p>
-        -->
       </div>
     </ng-template>
   </mat-expansion-panel>
   <div>
     <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
     <div class="header" [style.width.px]="width">
-      <div *ngIf="dataReady && validated">
+      <div *ngIf="dataReady && validated && is30">
+        <div [id]="colRec.column.name" class="column-32" [style.width.px]="(colRec.column.width * this.scale) - 1.2"
+             *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
+          <h3 class="overflow" [style.color]="grey">Column {{colRec.column.name}}</h3>
+          <h2 class="overflow"><strong>&nbsp;{{colRec.columnChar.final.char}}&nbsp;</strong></h2>
+        </div>
+      </div>
+      <div *ngIf="dataReady && validated && is50">
+        <div [id]="colRec.column.name" class="column-50" [style.width.px]="(colRec.column.width * this.scale) - 1.2"
+             *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
+          <h3 class="overflow" [style.color]="grey">Column {{colRec.column.name}}</h3>
+          <h1 class="overflow"><strong>&nbsp;{{colRec.columnChar.final.char}}&nbsp;</strong></h1>
+        </div>
+      </div>
+      <div *ngIf="dataReady && validated && is100">
         <div [id]="colRec.column.name" class="column" [style.width.px]="colRec.column.width"
              *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
           <h1 class="overflow">Column {{colRec.column.name}}: {{colRec.columnChar.portalsLength}} portals</h1>
@@ -59,7 +67,7 @@
             </i></h1>
           <div>
             <h1>
-              <i class ="overflow" [style.color]="grey" [style.font-size.em]=".7">
+              <i class="overflow" [style.color]="grey" [style.font-size.em]=".7">
                 {{colRec.columnChar.portalCount}}/{{colRec.columnChar.portalsLength}}
                 found: {{colRec.columnChar.percentDone}}% done
               </i>
@@ -79,5 +87,5 @@
     </canvas>
   </div>
 </div>
-<img *ngIf="src" alt="IngressFS @home Password Challenge" class="myImage"
+<img *ngIf="src" alt="IngressFS @home Password Challenge" class="displayNone"
      #myImage [src]="this.src" (load)="onImageLoad(myImage)"/>

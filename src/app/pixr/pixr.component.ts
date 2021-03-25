@@ -46,7 +46,19 @@ export class PixrComponent implements OnInit, AfterViewInit {
   bannerLeft = 60;
   bannerLeftMargin = 60;
   logoutButtonWidth = 56;
+
   bannerWidth: number;
+  width: number;
+  height: number;
+  bannerWidthO: number;
+  widthO: number;
+  heightO: number;
+  /////////////////////////////////////  Zoom In Zoom Out ///////////////////
+  is100 = true;
+  is50 = false;
+  is30 = false;
+  scale = 1;
+
 
   canvas: HTMLCanvasElement;
   image: HTMLImageElement;
@@ -54,8 +66,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
   @ViewChild('canvasEl') canvasEl: ElementRef;
   @ViewChild('myImage') myImage: ElementRef;
   /** Canvas 2d context */
-  private ctx: CanvasRenderingContext2D;
-  img: any;
+  ctx: CanvasRenderingContext2D;
+  img: HTMLImageElement;
 
   //////////////////////////  Hard Code ZONE Caution
   // TODO someday have an upload service for this
@@ -68,8 +80,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
   logBuffer = '';
   ///////////////////////////////////////////////////
 
-  width: number;
-  height: number;
   // Firestore data
   rawDataDoc: AngularFirestoreDocument;
   metaData: MetaData;
@@ -124,6 +134,16 @@ export class PixrComponent implements OnInit, AfterViewInit {
       this.bannerWidth = (
         window.innerWidth - this.bannerLeftMargin - this.logoutButtonWidth);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.getBootParams();
+  }
+
+  ngOnInit(): void {
+    this.authService.afAuth.currentUser.then(value => {
+      this.googleUID = value.uid;
+    });
   }
 
   buildColumnRecDataArray(): void {
@@ -239,7 +259,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
             } as string[];
           });
           // console.log('TEST drawPortalFrames() and buildColumnRecDataArray()');
-          this.drawPortalFrames();
+
+          this.drawPortalFrames(); // TODO TESTING TESTING
+
           this.buildColumnRecDataArray();
         });
       }
@@ -273,40 +295,13 @@ export class PixrComponent implements OnInit, AfterViewInit {
           folder = this.fsUser.folder;
         }
         this.src = this.path + folder + '/black.jpg';
+        // TODO remove after local testing
+        // this.src = 'assets/black.jpg';
         console.log('src = ' + this.src);
         // Once we have default project id we can subscribe
         // this.subscribeToRawdataFor(id); Deprecated
         this.subscribeToFsProject(id);
       }
-    });
-  }
-
-  ngAfterViewInit(): void {
-    this.getBootParams();
-    // For client app first get image data from Firebase then
-    // Get BootParam for fs_user then subscribe to default FirstSaturdayProj
-    /*
-    this.projectService.userBootParamDocRef.get().subscribe(data => {
-      if (data.exists) {
-        const userBootParam = data.data() as BootParam;
-        const id = userBootParam.project_id;
-        const folder = userBootParam.folder;
-        this.src = this.path + folder + '/black.jpg';
-        console.log('src = ' + this.src);
-        // const portalsCollectionName = userBootParam.portalCollectionName;
-        // Once we have default project id we can subscribe
-        // this.subscribeToRawdataFor(id); Deprecated
-        this.subscribeToFsProject(id);
-      } else {
-        // doc.data() will be undefined in this case
-      }
-    });
-     */
-  }
-
-  ngOnInit(): void {
-    this.authService.afAuth.currentUser.then(value => {
-      this.googleUID = value.uid;
     });
   }
 
@@ -315,26 +310,22 @@ export class PixrComponent implements OnInit, AfterViewInit {
     this.height = myImage.naturalHeight; // myImage.height;
     this.img = myImage;
     this.bannerWidth = this.width;
+    this.bannerWidthO = this.bannerWidth;
+    this.widthO = this.width;
+    this.heightO = this.height;
+
   }
 
   initCanvas(): void {
 
     this.canvas = this.canvasEl.nativeElement;
     this.ctx = this.canvas.getContext('2d');
-    /*
-    this.logger('Browser Dimensions: ' + this.width + ' x ' + this.height +
-      ' and Real Dimensions' + this.realWidth + ' x ' + this.realHeight);
-    if (this.width !== this.realWidth) {
-      this.width = this.realWidth;
-      this.height = this.realHeight;
-    }
-     */
     this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
     // MOUSE MOVE EVENT
     this.canvas.addEventListener('mousemove', (event): any => {
       const xy = this.getXY(event);
-      const x = xy[0];
-      const y = xy[1];
+      let x = xy[0];
+      let y = xy[1];
       if (this.isDraging) {
         if (y < 4) {
           this.isDraging = false;
@@ -352,14 +343,22 @@ export class PixrComponent implements OnInit, AfterViewInit {
       } else {
         let isPortal = false;
         let canPaste = false;
+        x = x / this.scale;
+        y = y / this.scale;
         this.rawData.columns.forEach(column => {
           column.portals.forEach(pr => {
-            // Make the target area smaller
-            const pad = 40; // padding inside portal rec to assist dragging and picking
-            const t = pr.t + pad;
-            const b = (pr.b + pr.t) - pad;
-            const r = (pr.r + pr.l) - pad;
-            const l = pr.l + pad;
+            let t = pr.t;
+            let b = (pr.b + pr.t);
+            let r = (pr.r + pr.l);
+            let l = pr.l;
+            if (this.scale > .25){
+              // Make the target area smaller
+              const pad = 40 * this.scale; // padding inside portal rec to assist dragging and picking
+              t = t + pad;
+              b = b - pad;
+              r = r - pad;
+              l = l + pad;
+            }
             if (y > t && y < b && x < r && x > l) {
               isPortal = true;
               if (this.projectService.clipboard) {
@@ -437,8 +436,10 @@ export class PixrComponent implements OnInit, AfterViewInit {
     if (!this.busy) {
       this.busy = true;
       const xy = this.getXY(e);
-      const x = xy[0];
-      const y = xy[1];
+      let x = xy[0];
+      let y = xy[1];
+      x = x / this.scale;
+      y = y / this.scale;
       let canDrag = false;
       this.rawData.columns.forEach(column => {
         if (x > (column.offset - column.width) && x < column.offset) {
@@ -494,6 +495,8 @@ export class PixrComponent implements OnInit, AfterViewInit {
                 dlgData.msg = ''; // use msg to comunicate info within the dialog
                 dlgData.rawDataId = this.rawData.id;
                 dlgData.user = this.ingressName;
+                dlgData.ctx = this.ctx;
+                dlgData.scale = this.scale;
                 this.lastXOffset = this.pageXOffset;
                 this.lastYOffset = this.pageYOffset;
                 this.openPortalDialog(dlgData); // send event to open dialog
@@ -562,22 +565,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
   drawFrame(p: PortalRec, color: string, lineWidth: number): void {
     this.ctx.strokeStyle = color; // '#FFFFFF';
-    this.ctx.lineWidth = lineWidth;
-    this.ctx.strokeRect(p.l, p.t, p.r, p.b);
-  }
-
-  drawShadow(p: PortalRec, lw: number): void {
-    // canvas.strokeStyle = "rgba("+r+","+g+","+b+","+alpha+")"; TODO control opacity
-    this.ctx.strokeStyle = '#000000';
-    const lineWidth = 10;
-    this.ctx.lineWidth = lineWidth;
-    const ofst = lineWidth - lw;
-    this.ctx.moveTo(p.l + p.r + ofst, p.t + ofst);
-    this.ctx.lineTo(p.l + p.r + ofst, p.t + p.b + ofst);
-    this.ctx.stroke();
-    this.ctx.moveTo(p.l + p.r + lineWidth, p.t + p.b + ofst);
-    this.ctx.lineTo(p.l + lineWidth, p.t + p.b + ofst);
-    this.ctx.stroke();
+    this.ctx.lineWidth = lineWidth * this.scale;
+    this.ctx.strokeRect(p.l * this.scale, p.t * this.scale,
+                         p.r * this.scale, p.b * this.scale);
   }
 
   // Get x and y even if canvas bounds x and y have been adjusted ie making a slice
@@ -649,6 +639,10 @@ export class PixrComponent implements OnInit, AfterViewInit {
       width: '600px',
       // height: '540px',
       data: dialogData
+    });
+
+    this.portalDialogRef.afterOpened().subscribe(() => {
+      console.log('portalDialogRef.afterOpened');
     });
 
     this.portalDialogRef.afterClosed().subscribe(result => {
@@ -762,22 +756,46 @@ export class PixrComponent implements OnInit, AfterViewInit {
     }
   }
 
+  changeImgSize(scale: number): void {
+    this.img.src = this.src;
+    this.img.addEventListener('load', () => {
+      console.log('Loaded?');
+      this.bannerWidth = this.bannerWidthO * scale;
+      this.width = this.widthO * scale;
+      this.height = this.heightO * scale;
+      this.img.height = this.height;
+      this.img.width = this.width;
+      this.ctx = this.canvas.getContext('2d');
+      setTimeout(e => {
+        this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
+        console.log('Image Done');
+        this.drawPortalFrames(); // TODO TESTING TESTING
+      }, 500);
+    });
+  }
+
   onSpeedDial($event: string): void {
     // alert($event);
     console.log($event);
     switch ($event) {
-      case 'scroll': {
-        alert('Show Info 1');
-      }
-                     break;
       case 'plus': {
-        alert('Show Info 2');
+        this.is30 = false; this.is50 = false; this.is100 = true;
+        this.scale = 1;
+        this.changeImgSize(this.scale);
       }
                    break;
       case 'minus': {
-        alert('Show Info 2');
+        this.is30 = false; this.is50 = true; this.is100 = false;
+        this.scale = .5;
+        this.changeImgSize(this.scale);
       }
                     break;
+      case 'miny': {
+        this.is30 = true; this.is50 = false; this.is100 = false;
+        this.scale = .30;
+        this.changeImgSize(this.scale);
+      }
+                   break;
     }
   }
 }
@@ -791,6 +809,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   templateUrl: 'portal-info-dialog.html',
 })
 export class PortalInfoDialogComponent {
+  canvas: any;
   constructor(public dialogRef: MatDialogRef<PortalInfoDialogComponent>,
               @Inject(MAT_DIALOG_DATA) public data: PortalRec,
               public projectService: ProjectService) {
