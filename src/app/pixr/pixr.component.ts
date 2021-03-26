@@ -86,7 +86,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   rawData: RawData;
   portalRecs: PortalRec[];
   logMessages: Messages;
-  logMsgArray: MsgDat[];
+  logMsgArray: MsgDat[] = [];
   columnRecDataArray: ColumnRecData[]; // gathers all recData objects according to column
   colRecPrefix = '_ColRec:';
   dataReady = false; // After all columnRecData has been initialized

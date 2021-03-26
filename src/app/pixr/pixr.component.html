@@ -5,12 +5,46 @@
   <mat-icon>logout</mat-icon>
 </button>
 
-<div *ngIf="(bannerWidth && logMsgArray)" class="banner" [style.left.px]="bannerLeft" [style.width.px]="bannerWidth">
+<div *ngIf="(bannerWidth)" class="banner_container" [style.left.px]="bannerLeft"
+     [style.width.px]="bannerWidth">
+  <div class="banner">
   <span *ngFor="let msgDat of logMsgArray" (click)="msgLogClick(msgDat)">
     @{{msgDat.msg}}&nbsp;&nbsp;&nbsp;</span>
+  </div>
+  <div>
+    <div class="message_top" *ngIf="rawData">
+      <div *ngIf="isAdmin" class="button_row">
+        <button mat-button [matMenuTriggerFor]="menu">
+          {{rawData.name}} <mat-icon>arrow_drop_down</mat-icon></button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item>Item 1</button>
+          <button mat-menu-item>Item 2</button>
+        </mat-menu>
+      </div>
+      <div *ngIf="!isAdmin" class="button_row"><h1>{{rawData.name}}</h1></div>
+      <div class="button_row"><h1><strong>
+        <span class="letter" *ngFor="let colRec of columnRecDataArray">
+          {{colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : '&nbsp;&nbsp;'}}</span>
+      </strong></h1>
+      </div>
+      <div class="button_row" *ngIf="isAdmin">
+        <button *ngIf="isAdmin" mat-raised-button color="warn"
+                (click)="clearAllMessages()">
+          Clear All!
+        </button>
+      </div>
+    </div>
+    <div class="example-button-row" *ngIf="!validated">
+      <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
+              (click)="setIngressName()">
+        To continue Enter Ingress Name
+      </button>
+    </div>
+  </div>
 </div>
-
+<div class="topbar"></div>
 <div class="container">
+  <!--
   <mat-expansion-panel (opened)="panelOpenState = true"
                        (closed)="panelOpenState = false"
                        [expanded]="expandMe">
@@ -37,6 +71,7 @@
       </div>
     </ng-template>
   </mat-expansion-panel>
+  -->
   <div>
     <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
     <div class="header" [style.width.px]="width">
