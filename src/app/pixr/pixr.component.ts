@@ -117,6 +117,11 @@ export class PixrComponent implements OnInit, AfterViewInit {
   fsUser: BootParam;
   fsAdmin: BootParam;
 
+  debugMsgs = 'START: ';
+  imageLoaded = false;
+  showDebug = true;
+  waves = 'assets/waves.gif';
+
   constructor(public authService: AuthService,
               private projectService: ProjectService,
               private usersService: UsersService,
@@ -143,6 +148,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.authService.afAuth.currentUser.then(value => {
       this.googleUID = value.uid;
+      this.debugMsgs += value.displayName + 'Logged In, ';
     });
   }
 
@@ -151,6 +157,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
     // if (this.dataReady){ return; }
     // now we can initialize or get the column rec data
     this.columnRecDataArray = [];
+    this.debugMsgs += 'rawData.columns length: ' + this.rawData.columns.length + ', ';
     this.rawData.columns.forEach(column => {
       // Build the PortalRec[] for this column
       const portalRecs: PortalRec[] = [];
@@ -244,11 +251,13 @@ export class PixrComponent implements OnInit, AfterViewInit {
         const unknown: any = test;
         this.metaData = unknown as MetaData;
         this.rawData = this.metaData.rawData;
+        this.debugMsgs += 'rawData name: ' + this.rawData.name + ', ';
         this.logger('In subscribeToFsProject - rawData name:' + this.rawData.name + ' id: ' + this.rawData.id);
         this.projectService.getMsgLog(id).get().subscribe(doc2 => {
           if (doc2.exists) {
             this.logMessages = doc2.data() as Messages;
             this.logMsgArray = this.logMessages.messages;
+            this.debugMsgs += 'getMsgLog length: ' + this.logMsgArray.length + ', ';
           }
         });
         this.ingressNamesDoc = this.usersService.getUserDocs().subscribe(dat => {
@@ -259,7 +268,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
             } as string[];
           });
           // console.log('TEST drawPortalFrames() and buildColumnRecDataArray()');
-
+          this.debugMsgs += 'ingressNames length: ' + this.allIngressNames.length + ', ';
           this.drawPortalFrames(); // TODO TESTING TESTING
 
           this.buildColumnRecDataArray();
@@ -300,12 +309,16 @@ export class PixrComponent implements OnInit, AfterViewInit {
         console.log('src = ' + this.src);
         // Once we have default project id we can subscribe
         // this.subscribeToRawdataFor(id); Deprecated
+        this.debugMsgs += 'src: ' + this.src + ', ';
         this.subscribeToFsProject(id);
       }
     });
   }
 
   onImageLoad(myImage: HTMLImageElement): void {
+    this.debugMsgs += 'onImageLoad START: ';
+    // TODO setTimeout used to kick start angular redraw see ngZone
+    // setTimeout(() =>  {
     this.width = myImage.naturalWidth; // myImage.width;
     this.height = myImage.naturalHeight; // myImage.height;
     this.img = myImage;
@@ -313,7 +326,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
     this.bannerWidthO = this.bannerWidth;
     this.widthO = this.width;
     this.heightO = this.height;
-
+    this.debugMsgs += 'onImageLoad data SET: ';
+    this.imageLoaded = true;
+    // }, 500);
   }
 
   initCanvas(): void {
@@ -557,6 +572,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
   drawPortalFrames(): void {
     if (this.ctx && this.portalRecs) {
+      this.debugMsgs += 'drawPortalFrames length: ' + this.portalRecs.length + ', ';
       this.portalRecs.forEach(prtl => {
         this.drawPortalFrame(prtl);
       });
@@ -593,6 +609,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
         this.projectService.setLogMsg(this.rawData.id,
           this.ingressName + ' Logged In', null);
       }
+      this.showDebug = false;
     }
   }
 

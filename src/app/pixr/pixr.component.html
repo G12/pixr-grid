@@ -4,7 +4,8 @@
         (click)="logout()">
   <mat-icon>logout</mat-icon>
 </button>
-
+<h1 *ngIf="!bannerWidth">----->  Please Wait Image Loading</h1>
+<img *ngIf="!bannerWidth" alt="Waiting Waves" [src]="waves">
 <div *ngIf="(bannerWidth)" class="banner_container" [style.left.px]="bannerLeft"
      [style.width.px]="bannerWidth">
   <div class="banner">
@@ -27,6 +28,8 @@
           {{colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : '&nbsp;&nbsp;'}}</span>
       </strong></h1>
       </div>
+      <span *ngIf="!imageLoaded">Image Loading...</span>
+      <span *ngIf="imageLoaded"><strong> beta:002</strong></span>
       <div class="button_row" *ngIf="isAdmin">
         <button *ngIf="isAdmin" mat-raised-button color="warn"
                 (click)="clearAllMessages()">
@@ -34,44 +37,18 @@
         </button>
       </div>
     </div>
+    <p *ngIf="isAdmin && showDebug">{{debugMsgs}}</p>
+
     <div class="example-button-row" *ngIf="!validated">
-      <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
+      <button *ngIf="authService.afAuth.user && imageLoaded" mat-raised-button color="primary"
               (click)="setIngressName()">
         To continue Enter Ingress Name
       </button>
     </div>
   </div>
 </div>
-<div class="topbar"></div>
+<div class="topbar"></div><!-- spacer -->
 <div class="container">
-  <!--
-  <mat-expansion-panel (opened)="panelOpenState = true"
-                       (closed)="panelOpenState = false"
-                       [expanded]="expandMe">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        &nbsp;<span class="memo">Tap to: {{panelOpenState ? 'Close' : 'Open'}}</span>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <div *ngIf="!validated; else Content" class="example-button-row">
-      <h1 *ngIf="rawData">{{rawData.name}}</h1>
-      <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
-              (click)="setIngressName()">
-        To continue Enter Ingress Name
-      </button>
-    </div>
-    <ng-template #Content>
-      <div class="content">
-        <h1>This area is Under Construction</h1>
-        <button *ngIf="isAdmin" mat-raised-button color="warn"
-                (click)="clearAllMessages()">
-          Clear All Messages!
-        </button>
-        <p class="logBuffer" *ngIf="isAdmin">Log Messages: [{{logBuffer}}]</p>
-      </div>
-    </ng-template>
-  </mat-expansion-panel>
-  -->
   <div>
     <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
     <div class="header" [style.width.px]="width">

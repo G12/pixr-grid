@@ -231,46 +231,4 @@ export class ProjectService {
       console.log(reason);
     });
   }
-
-
-  /////////////////// Prototyping Code ////////////////////////////
-
-  /*
-  get CanvasData(): CanvasData {
-    return this.canvasData;
-  }
-
-  makeTestData(): void {
-    this.canvasData = {
-      columnCollection: [],
-      imgUrl: '', srcHeight: 3300, srcWidth: 7000, displayWidth: 4890
-    };
-
-    const offsets = [269, 576, 907, 1157, 1499, 1795, 2139, 2460,
-      2750, 3100, 3366, 3625, 3918, 4260, 4581, 4865];
-    let last = 0;
-    const widths: number[] = [];
-    for (let i = 0; i < offsets.length; i++) {
-      const char = String.fromCharCode(65 + i);
-      widths[i] = (offsets[i] - last - 2);
-      const column: ColumnData =
-        {
-          width: widths[i],
-          offset: offsets[i],
-          name: char,
-          portals: []
-        };
-      this.canvasData.columnCollection.push(column);
-      last = offsets[i];
-    }
-  }
-
-  getCanvasDataSlowly(): Promise<CanvasData> {
-    this.makeTestData();
-    return new Promise(resolve => {
-      // Simulate server latency with 2 second delay
-      setTimeout(() => resolve(this.CanvasData), 2000);
-    });
-  }
-   */
 }
