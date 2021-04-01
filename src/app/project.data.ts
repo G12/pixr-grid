@@ -34,6 +34,7 @@ export interface ColumnRecData {
   portalRecs?: PortalRec[]; // used for passing data - striped before save to db
   columnChar: ColumnChar;
   ingressName?: string; // used for passing data - striped before save to db
+  backColor?: string;
 }
 
 export interface LatLng {
@@ -172,3 +173,9 @@ export interface BootParam {
   folder?: string;
 }
 
+/////////////////////// gridList /////////////////////////
+export interface GridItem {
+  id: string;
+  color: string;
+  prtlRec: PortalRec;
+}

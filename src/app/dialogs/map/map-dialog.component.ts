@@ -42,14 +42,6 @@ export class MapDialogComponent {
        this.dialogRef.close();
        this.projectService.setColumnRecData(template);
 
-       // Scroll into view
-       const target = document.getElementById(result.column.name);
-       target.scrollIntoView();
-       // Try to scroll into view vertically
-       window.scrollTo({
-         top: 0
-       });
-
      } else {
        // Should never Get here
        console.log('mapDialogComponent onOkClick NO result');
@@ -58,18 +50,12 @@ export class MapDialogComponent {
    }
 
   validateChar(columnRecData: ColumnRecData): void {
+    // TODO can validate using a glyph list
     const test = columnRecData;
   }
 
   onCancelClick(data: ColumnRecData): void {
     this.dialogRef.close();
-    // Scroll into view
-    const target = document.getElementById(data.column.name);
-    target.scrollIntoView();
-    // Try to scroll into view vertically
-    window.scrollTo({
-      top: 0
-    });
   }
 }
 

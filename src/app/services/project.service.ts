@@ -72,11 +72,9 @@ export class ProjectService {
 
   ////////////////// disparate PortalRecCollection objects //////////////
   setColumnRecData(columnRecData: ColumnRecData): void{
-    // console.log('columnRecData: ' + JSON.stringify(columnRecData));
     this.firestore.collection(columnRecData.rawDataId).doc(columnRecData.id).set(columnRecData).then(value => {
-      // console.log('setportal return value: ' + JSON.stringify(value));
     }).catch(reason => {
-      console.log('setColumnRecData ERROR reason: ' + JSON.stringify(reason));
+      console.log('setColumnRecData ERROR reason: ', reason);
     });
   }
 
@@ -122,20 +120,16 @@ export class ProjectService {
   }
 
   //////////////////////////// PortalRecCollection  /////////////////////
-  updatePortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
-    this.firestore.collection(rawDatId).doc(path).update(portalRec);
+  updatePortalRec(rawDatId: string, path: string, portalRec: PortalRec): Promise<void>{
+    return this.firestore.collection(rawDatId).doc(path).update(portalRec);
   }
 
   getPortalRecs(path: string): any{
     return this.firestore.collection(path).snapshotChanges();
   }
 
-  setPortalRec(rawDatId: string, path: string, portalRec: PortalRec): void{
-    this.firestore.collection(rawDatId).doc(path).set(portalRec).then(value => {
-      // console.log('setportal return value: ' + JSON.stringify(value));
-    }).catch(reason => {
-      console.log('setPortal ERROR reason: ' + JSON.stringify(reason));
-    });
+  setPortalRec(rawDatId: string, path: string, portalRec: PortalRec): Promise<void>{
+    return this.firestore.collection(rawDatId).doc(path).set(portalRec);
   }
 
   getMsgLog(rawDatId: string): AngularFirestoreDocument{

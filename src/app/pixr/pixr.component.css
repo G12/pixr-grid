@@ -6,25 +6,35 @@
   font-weight: bold;
 }
 .column {
-  display: inline-block;
   border: black solid 2px;
   border-right: black solid 1px;
   border-left: black solid 1px;
   text-align: center;
-  height: 248px;
   cursor: pointer;
   border-radius: 25px;
 }
-.column-50 {
-  padding-top: 8px;
-  display: inline-block;
-  border: black solid 2px;
-  border-right: black solid 1px;
-  border-left: black solid 1px;
-  text-align: center;
-  height: 128px;
+
+.link {
   cursor: pointer;
-  border-radius: 18px;
+}
+h1 {
+  margin-bottom: 4px;
+}
+h3 {
+  margin-bottom: 4px;
+}
+.portal-50 {
+  display: inline-block;
+  text-align: center;
+}
+.gridItem {
+  width: 80%;
+  height: available;
+  cursor: pointer;
+}
+.column-50 {
+  display: inline-block;
+  text-align: center;
 }
 .column-32 {
   padding-top: 4px;

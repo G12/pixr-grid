@@ -9,6 +9,7 @@
 <div mat-dialog-content>
   <div>
     <h1>Basic use</h1>
+    <!--
     <div *ngIf="data.latLng">
       <p *ngIf="!projectService.clipboard">After the portal has been found, you can
         <button mat-raised-button color="accent" (click)="setClipboard(data)">Copy</button>
@@ -20,6 +21,7 @@
       Clear the Clipboard
     </button>
     </p>
+    -->
     <ul>
       <li *ngIf="!data.latLng"><strong>Know Where</strong> the portal is
         go to the Intel Map to get the link
@@ -59,7 +61,6 @@
       <mat-hint>Paste portal location here</mat-hint>
     </mat-form-field>
   </div>
-  <app-canvas [portalRec]="data"></app-canvas>
 </div>
 <div mat-dialog-actions align="end">
   <button mat-button (click)="onCancelClick(data)">Cancel</button>

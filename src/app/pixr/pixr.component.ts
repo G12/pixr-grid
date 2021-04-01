@@ -1,11 +1,11 @@
-import {AfterViewInit, Component, ElementRef, HostListener, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
 import {ProjectService} from '../services/project.service';
 import {
   AdminList,
   BootParam,
-  CharDat,
+  CharDat, Column,
   ColumnChar,
-  ColumnRecData,
+  ColumnRecData, GridItem,
   IngressNameData,
   LatLng,
   Messages,
@@ -33,7 +33,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
   P_FULL = 1;
   P_NO_URL = 2;
   P_NO_NAME = 3;
-  grey = '#666666';
 
   // TODO add project selection for "readonly" historic projects
   // expansion panel
@@ -47,7 +46,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   bannerLeftMargin = 60;
   logoutButtonWidth = 56;
 
-  bannerWidth: number;
+  bannerWidth = 1024;
   width: number;
   height: number;
   bannerWidthO: number;
@@ -97,16 +96,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
   ingressName = '';
   ingressNamesDoc: AngularFirestoreDocument;
   allIngressNames: IngressNameData[];
-  private busy = false;
-  private canDrag = false;
-  private isDraging = false;
-  private lastX: number;
-  private startPageOffset;
-  private startTime: number;
-  // private canPaste = true; // TODO dynamically assign this when clipboard is full
-  // clipBoard: PortalRec;
 
-  // dialogData: DialogData = {id: '', name: '', url: '', latLng: null, columnName: '', portalIndex: null};
   private portalDialogRef: MatDialogRef<PortalInfoDialogComponent, PortalRec>;
   validated = false; // After user sets ingress name set true and shoe images
 
@@ -122,23 +112,24 @@ export class PixrComponent implements OnInit, AfterViewInit {
   showDebug = true;
   waves = 'assets/waves.gif';
 
+  lightumber = '#ffcc99';
+  darkumber = '#cc9966';
+  lightgrey = '#EEEEEE';
+  grey = '#CCCCCC';
+  mediumgrey = '#555555';
+  darkgrey = '#333333';
+  black = '#000000';
+  nothing = 'transparent';
+
+  maxPortals: number;
+  gridList: GridItem[];
+  isUpdate = false;
+
   constructor(public authService: AuthService,
               private projectService: ProjectService,
               private usersService: UsersService,
               public dialog: MatDialog) {
     this.rawData = {id: '', name: '', columns: []};
-  }
-
-  @HostListener('window:scroll', ['$event'])
-  doSomething(event): void {
-    if (event.isTrusted) {
-      // console.log('window:scroll: ' + JSON.stringify(event));
-      this.pageXOffset = window.pageXOffset;
-      this.pageYOffset = window.pageYOffset;
-      this.bannerLeft = window.pageXOffset + this.bannerLeftMargin;
-      this.bannerWidth = (
-        window.innerWidth - this.bannerLeftMargin - this.logoutButtonWidth);
-    }
   }
 
   ngAfterViewInit(): void {
@@ -152,15 +143,76 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
   }
 
+  initPortalRec(column: Column, pr: PortalRec): PortalRec{
+    let name = '';
+    let url = '';
+    let latLng = null;
+    const prtl: PortalRec = this.portalRecs.find(p => p.index === pr.index && p.colName === column.name);
+    let owner = '';
+    if (prtl) {
+      owner = prtl.owner ? prtl.owner : '';
+      name = prtl.name;
+      url = prtl.url;
+      latLng = prtl.latLng;
+    }
+    const dlgData: PortalRec = {
+      rawDataId: this.rawData.id,
+      colName: column.name,
+      user: this.ingressName,
+      owner,
+      index: pr.index, l: pr.l, r: pr.r, t: pr.t, b: pr.b,
+      name,
+      url,
+      latLng,
+      scale: this.scale,
+    };
+    return dlgData;
+  }
+
+  buildGridlist(): void {
+    console.log('buildGridlist()');
+    this.gridList = [];
+    for ( let i = 1; i <= this.maxPortals; i++) {
+      this.rawData.columns.forEach(col => {
+        const id = col.name + ':' + i;
+        const gridItem: GridItem = {
+          id, color: this.nothing, prtlRec: null };
+
+        const prtl = col.portals.find
+          (pr => pr.colName === col.name && pr.index === i);
+        if (prtl) {
+          const prtlRec = this.initPortalRec(col, prtl);
+          gridItem.prtlRec = prtlRec;
+          if (prtlRec.latLng) {
+            gridItem.color = this.lightgrey;
+          } else {
+              gridItem.color = this.grey;
+          }
+        } else {
+          gridItem.id = null;
+        }
+        this.gridList.push(gridItem);
+      });
+    }
+  }
+
+  openIntelUrl(url: string): void {
+    if (confirm('Open the intel map to: ' + url)){
+      window.open(url, 'intel_map');
+    }
+  }
+
   buildColumnRecDataArray(): void {
     // BIG NO NO do not call more than once overloaded the backend
     // if (this.dataReady){ return; }
     // now we can initialize or get the column rec data
     this.columnRecDataArray = [];
     this.debugMsgs += 'rawData.columns length: ' + this.rawData.columns.length + ', ';
+    this.maxPortals = 0;
     this.rawData.columns.forEach(column => {
       // Build the PortalRec[] for this column
       const portalRecs: PortalRec[] = [];
+      this.maxPortals = column.portals.length > this.maxPortals ? column.portals.length : this.maxPortals;
       let portalCount = 0;
       column.portals.forEach(portal => {
         // get the portal rec for that
@@ -225,11 +277,14 @@ export class PixrComponent implements OnInit, AfterViewInit {
         };
       }
       // add the optional fields for passing data around
+      const color = portalCount > 0 ? this.darkumber : this.lightumber;
+      colRecData.backColor = color;
       colRecData.column = column;
       colRecData.portalRecs = portalRecs;
       colRecData.ingressName = this.ingressName;
       this.columnRecDataArray.push(colRecData);
       this.dataReady = true;
+      this.bannerWidth = 128 * this.columnRecDataArray.length;
     });
     // console.log('TESTING TESTING DataReady');
     this.dataReady = true;
@@ -267,11 +322,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
               ...e.payload.doc.data()
             } as string[];
           });
-          // console.log('TEST drawPortalFrames() and buildColumnRecDataArray()');
           this.debugMsgs += 'ingressNames length: ' + this.allIngressNames.length + ', ';
-          this.drawPortalFrames(); // TODO TESTING TESTING
-
           this.buildColumnRecDataArray();
+          this.buildGridlist();
         });
       }
     });
@@ -315,223 +368,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onImageLoad(myImage: HTMLImageElement): void {
-    this.debugMsgs += 'onImageLoad START: ';
-    // TODO setTimeout used to kick start angular redraw see ngZone
-    // setTimeout(() =>  {
-    this.width = myImage.naturalWidth; // myImage.width;
-    this.height = myImage.naturalHeight; // myImage.height;
-    this.img = myImage;
-    this.bannerWidth = this.width;
-    this.bannerWidthO = this.bannerWidth;
-    this.widthO = this.width;
-    this.heightO = this.height;
-    this.debugMsgs += 'onImageLoad data SET: ';
-    this.imageLoaded = true;
-    // }, 500);
-  }
-
-  initCanvas(): void {
-
-    this.canvas = this.canvasEl.nativeElement;
-    this.ctx = this.canvas.getContext('2d');
-    this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
-    // MOUSE MOVE EVENT
-    this.canvas.addEventListener('mousemove', (event): any => {
-      const xy = this.getXY(event);
-      let x = xy[0];
-      let y = xy[1];
-      if (this.isDraging) {
-        if (y < 4) {
-          this.isDraging = false;
-          return;
-        }
-        if (!this.lastX) {
-          this.lastX = x;
-        }
-        const delta = (this.lastX - x);
-        const newOffset = window.pageXOffset + delta;
-        window.scrollTo({
-          left: newOffset
-        });
-        this.lastX = x + delta;
-      } else {
-        let isPortal = false;
-        let canPaste = false;
-        x = x / this.scale;
-        y = y / this.scale;
-        this.rawData.columns.forEach(column => {
-          column.portals.forEach(pr => {
-            let t = pr.t;
-            let b = (pr.b + pr.t);
-            let r = (pr.r + pr.l);
-            let l = pr.l;
-            if (this.scale > .25){
-              // Make the target area smaller
-              const pad = 40 * this.scale; // padding inside portal rec to assist dragging and picking
-              t = t + pad;
-              b = b - pad;
-              r = r - pad;
-              l = l + pad;
-            }
-            if (y > t && y < b && x < r && x > l) {
-              isPortal = true;
-              if (this.projectService.clipboard) {
-                // when the clipboard is full
-                canPaste = true;
-                // but you cannot paste into a loaded portal
-                const pr2 = this.portalRecs.find(p => p.colName === pr.colName && p.index === pr.index);
-                if (pr2) {
-                  canPaste = !pr2.latLng;
-                }
-              } else {
-                canPaste = false;
-              }
-            }
-          });
-        });
-        if (isPortal) {
-          this.canDrag = false;
-          if (canPaste) {
-            this.canvasEl.nativeElement.style.cursor = 'cell';
-          } else {
-            this.canvasEl.nativeElement.style.cursor = 'pointer';
-          }
-        } else {
-          this.canvasEl.nativeElement.style.cursor = 'move';
-          this.canDrag = true;
-        }
-      }
-    });
-    // MOUSE DOWN EVENT
-    this.canvas.addEventListener('mousedown', (event): any => {
-      // TODO
-      if (this.canDrag) {
-        const xy = this.getXY(event);
-        const x = xy[0];
-        const y = xy[1];
-        if (!this.isDraging) {
-          this.startPageOffset = window.pageXOffset;
-          const d = new Date();
-          this.startTime = d.getSeconds() * 1000 + d.getMilliseconds();
-        }
-        this.isDraging = true;
-      } else {
-        this.handleMouseDown(event);
-      }
-    });
-    // End of MOUSE DOWN EVENT
-    // MOUSE UP EVENT
-    this.canvas.addEventListener('mouseup', (event): any => {
-      this.isDraging = false;
-      // TODO measure the velocity and adjust the fling distance.
-      const d = new Date();
-      const endTime = d.getSeconds() * 1000 + d.getMilliseconds();
-      const dt = endTime - this.startTime;
-      let dd = window.pageXOffset - this.startPageOffset;
-      let c = 0;
-      if (dt < 1000) {
-        const ct = 1000 / dt;
-        const cd = Math.abs(dd / 500);
-        c = ct * cd;
-      }
-      dd = dd * c;
-      const left = window.pageXOffset + dd;
-      window.scrollTo({
-        left,
-        behavior: 'smooth'
-      });
-      this.lastX = null;
-    });
-    // End of MOUSE UP EVENT
-  }
-
-  /// Mouse Events ( after canvas initialized
-  handleMouseDown(e): void {
-    if (!this.busy) {
-      this.busy = true;
-      const xy = this.getXY(e);
-      let x = xy[0];
-      let y = xy[1];
-      x = x / this.scale;
-      y = y / this.scale;
-      let canDrag = false;
-      this.rawData.columns.forEach(column => {
-        if (x > (column.offset - column.width) && x < column.offset) {
-          column.portals.forEach(pr => {
-            if ((y > pr.t && y < (pr.b + pr.t)) && (x < (pr.r + pr.l) && x > pr.l)) {
-              let name = '';
-              let url = '';
-              let latLng = null;
-              const path = column.name + ':' + pr.index;
-              const prtl: PortalRec = this.portalRecs.find(p => p.index === pr.index && p.colName === column.name);
-              let owner = '';
-              if (prtl) {
-                owner = prtl.owner ? prtl.owner : '';
-                name = prtl.name;
-                url = prtl.url;
-                latLng = prtl.latLng;
-              }
-              const dlgData: PortalRec = {
-                rawDataId: this.rawData.id,
-                colName: column.name,
-                user: this.ingressName,
-                owner,
-                index: pr.index, l: pr.l, r: pr.r, t: pr.t, b: pr.b,
-                name,
-                url,
-                latLng,
-              };
-              let canOpen = true;
-              if (this.projectService.clipboard && !latLng) {
-                const src = this.projectService.clipboard.colName + ':' +
-                  this.projectService.clipboard.index;
-                const dest = dlgData.colName + ':' + dlgData.index;
-                if (confirm('Do you want to PASTE [ ' + src + ' ] to [ ' + dest + ' ]')) {
-                  canOpen = false;
-                  dlgData.url = this.projectService.clipboard.url;
-                  dlgData.latLng = this.projectService.clipboard.latLng;
-                  dlgData.status = this.P_FULL;
-                  // TODO At this point we can do auto paste;
-                  // this.projectService.setLogMsg(this.rawData.id,
-                  //  this.ingressName + ' discovered ' + dlgData.colName + ':' + dlgData.index);
-                  this.projectService.setPortalRec(this.rawData.id, path, dlgData);
-                  dlgData.owner = this.ingressName;
-                  this.updatePortalRecs(dlgData);
-                  this.projectService.setLogMsg(
-                    this.rawData.id,
-                    this.ingressName + ' Pasted ' + src + ' to ' + dest,
-                    dlgData);
-                } else {
-                  canOpen = true;
-                }
-              }
-              if (canOpen) {
-                dlgData.msg = ''; // use msg to comunicate info within the dialog
-                dlgData.rawDataId = this.rawData.id;
-                dlgData.user = this.ingressName;
-                dlgData.ctx = this.ctx;
-                dlgData.scale = this.scale;
-                this.lastXOffset = this.pageXOffset;
-                this.lastYOffset = this.pageYOffset;
-                this.openPortalDialog(dlgData); // send event to open dialog
-                this.busy = false;
-              }
-              return;
-            } else {
-              canDrag = true;
-            }
-          });
-        }
-        canDrag = true;
-      });
-      if (canDrag) {
-        // console.log('CAN DRAG');
-      }
-    }
-    this.busy = false;
-  }
-
   updatePortalRecs(prtl: PortalRec): void {
     // Once we have the new collection search for incoming rec if found update else add
     const path = prtl.colName + ':' + prtl.index;
@@ -543,55 +379,17 @@ export class PixrComponent implements OnInit, AfterViewInit {
       } else { // Erasing record
         msg = msg + ' Erased ';
       }
-      this.projectService.updatePortalRec(this.rawData.id, path, prtl);
+      this.projectService.updatePortalRec(this.rawData.id, path, prtl).then(() => {
+        // this.buildGridlist();
+      });
     } else {
       msg = msg + ' Discovered ';
-      this.projectService.setPortalRec(this.rawData.id, path, prtl);
+      this.projectService.setPortalRec(this.rawData.id, path, prtl).then(() => {
+        // this.buildGridlist();
+      });
     }
     this.projectService.setLogMsg(this.rawData.id,
       msg + ' ' + path, prtl);
-    this.drawPortalFrame(prtl);
-  }
-
-  drawPortalFrame(prtl: PortalRec): void {
-    if (prtl.status) {
-      if (prtl.status === this.P_FULL) {
-        this.drawFrame(prtl, '#FFFFFF', 6);
-
-      } else if (prtl.status === this.P_NO_URL ||
-        prtl.status === this.P_NO_NAME) {
-
-        this.drawFrame(prtl, '#999999', 6);
-
-      } else if (prtl.status === this.P_EMPTY) {
-
-        this.drawFrame(prtl, '#333333', 6);
-      }
-    }
-  }
-
-  drawPortalFrames(): void {
-    if (this.ctx && this.portalRecs) {
-      this.debugMsgs += 'drawPortalFrames length: ' + this.portalRecs.length + ', ';
-      this.portalRecs.forEach(prtl => {
-        this.drawPortalFrame(prtl);
-      });
-    }
-  }
-
-  drawFrame(p: PortalRec, color: string, lineWidth: number): void {
-    this.ctx.strokeStyle = color; // '#FFFFFF';
-    this.ctx.lineWidth = lineWidth * this.scale;
-    this.ctx.strokeRect(p.l * this.scale, p.t * this.scale,
-                         p.r * this.scale, p.b * this.scale);
-  }
-
-  // Get x and y even if canvas bounds x and y have been adjusted ie making a slice
-  private getXY(event: MouseEvent): any {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    return [x, y];
   }
 
   setIngressName(): void {
@@ -603,7 +401,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
       this.ingressName = name;
       this.usersService.updateIngressName(name);
       this.expandMe = false;
-      this.initCanvas();
       this.bannerInfo = '  @ ' + name + ' started working!' + this.bannerInfo;
       if (this.rawData) {
         this.projectService.setLogMsg(this.rawData.id,
@@ -646,15 +443,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
     return (-1 !== url.indexOf('https://intel.ingress.com/intel?', 0));
   }
 
-  autoClosePortalDialog(data: PortalRec): void {
-    const dialogRef = this.dialog.getDialogById(this.portalDialogRef.id);
-    dialogRef.close(data);
-  }
-
   openPortalDialog(dialogData: PortalRec): void {
     this.portalDialogRef = this.dialog.open(PortalInfoDialogComponent, {
       width: '600px',
-      // height: '540px',
       data: dialogData
     });
 
@@ -663,7 +454,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
 
     this.portalDialogRef.afterClosed().subscribe(result => {
-
       if (result) {
         let status = 0;
         const dat = result as PortalRec;
@@ -715,16 +505,6 @@ export class PixrComponent implements OnInit, AfterViewInit {
         }
         this.projectService.setPortalRec(this.rawData.id, path, prtl);
         this.updatePortalRecs(prtl);
-
-        // Scroll into view
-        const target = document.getElementById(prtl.colName);
-        target.scrollIntoView();
-        // Try to scroll into view vertically
-        window.scrollTo({
-          // top: this.lastYOffset,
-          top: prtl.t
-        });
-
       }
     });
   }
@@ -772,54 +552,11 @@ export class PixrComponent implements OnInit, AfterViewInit {
       this.projectService.clearLog(this.rawData.id);
     }
   }
-
-  changeImgSize(scale: number): void {
-    this.img.src = this.src;
-    this.img.addEventListener('load', () => {
-      console.log('Loaded?');
-      this.bannerWidth = this.bannerWidthO * scale;
-      this.width = this.widthO * scale;
-      this.height = this.heightO * scale;
-      this.img.height = this.height;
-      this.img.width = this.width;
-      this.ctx = this.canvas.getContext('2d');
-      setTimeout(e => {
-        this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
-        console.log('Image Done');
-        this.drawPortalFrames(); // TODO TESTING TESTING
-      }, 500);
-    });
-  }
-
-  onSpeedDial($event: string): void {
-    // alert($event);
-    console.log($event);
-    switch ($event) {
-      case 'plus': {
-        this.is30 = false; this.is50 = false; this.is100 = true;
-        this.scale = 1;
-        this.changeImgSize(this.scale);
-      }
-                   break;
-      case 'minus': {
-        this.is30 = false; this.is50 = true; this.is100 = false;
-        this.scale = .5;
-        this.changeImgSize(this.scale);
-      }
-                    break;
-      case 'miny': {
-        this.is30 = true; this.is50 = false; this.is100 = false;
-        this.scale = .30;
-        this.changeImgSize(this.scale);
-      }
-                   break;
-    }
-  }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////
-// TODO get this out here
+// TODO get this outa here
 
 @Component({
   selector: 'app-portal-info-dialog',
@@ -834,22 +571,12 @@ export class PortalInfoDialogComponent {
 
   onCancelClick(data: PortalRec): void {
     this.dialogRef.close();
-    // Scroll into view
-    const target = document.getElementById(data.colName);
-    target.scrollIntoView();
-    // Try to scroll into view vertically
-    window.scrollTo({
-      top: data.t,
-    });
   }
 
-  // TODO this is not usefull right now could be usefull for standalone dialog component
   openIntelMap(data: PortalRec): void {
     if (data) {
       if (this.isValidURL(data.url)) {
         window.open(data.url, 'intel_map');
-        // this.dialogRef.close();
-        // TODO pixr could hang when a dialog is open too long - timeout maybe
       } else {
         alert(data.url + ' is not a valid intel url');
       }
@@ -872,13 +599,6 @@ export class PortalInfoDialogComponent {
   validateUrl(url: string, data: PortalRec): void {
     if (this.isValidURL(url)) {
       this.dialogRef.close(data);
-      // Scroll into view
-      const target = document.getElementById(data.colName);
-      target.scrollIntoView();
-      // Try to scroll into view vertically
-      window.scrollTo({
-        top: data.t,
-      });
     } else {
       data.msg = 'Not a Valid intel URL!';
     }
@@ -893,26 +613,12 @@ export class PortalInfoDialogComponent {
       data.latLng = null;
       data.url = '';
       this.dialogRef.close(data);
-      // Scroll into view
-      const target = document.getElementById(data.colName);
-      target.scrollIntoView();
-      // Try to scroll into view vertically
-      window.scrollTo({
-        top: data.t,
-      });
     }
   }
 
   setClipboard(data: PortalRec): void {
     this.projectService.clipboard = data;
     this.dialogRef.close(data);
-    // Scroll into view
-    const target = document.getElementById(data.colName);
-    target.scrollIntoView();
-    // Try to scroll into view vertically
-    window.scrollTo({
-      top: data.t,
-    });
   }
 
 }

@@ -4,8 +4,6 @@
         (click)="logout()">
   <mat-icon>logout</mat-icon>
 </button>
-<h1 *ngIf="!bannerWidth">----->  Please Wait Image Loading</h1>
-<img *ngIf="!bannerWidth" alt="Waiting Waves" [src]="waves">
 <div *ngIf="(bannerWidth)" class="banner_container" [style.left.px]="bannerLeft"
      [style.width.px]="bannerWidth">
   <div class="banner">
@@ -16,10 +14,12 @@
     <div class="message_top" *ngIf="rawData">
       <div *ngIf="isAdmin" class="button_row">
         <button mat-button [matMenuTriggerFor]="menu">
-          {{rawData.name}} <mat-icon>arrow_drop_down</mat-icon></button>
+          {{rawData.name}}
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
         <mat-menu #menu="matMenu">
-          <button mat-menu-item>Item 1</button>
-          <button mat-menu-item>Item 2</button>
+          <button mat-menu-item>Under Construction</button>
+          <button mat-menu-item>Open a previous project!</button>
         </mat-menu>
       </div>
       <div *ngIf="!isAdmin" class="button_row"><h1>{{rawData.name}}</h1></div>
@@ -28,8 +28,7 @@
           {{colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : '&nbsp;&nbsp;'}}</span>
       </strong></h1>
       </div>
-      <span *ngIf="!imageLoaded">Image Loading...</span>
-      <span *ngIf="imageLoaded"><strong> beta:002</strong></span>
+      <span><strong> beta:001.002</strong></span>
       <div class="button_row" *ngIf="isAdmin">
         <button *ngIf="isAdmin" mat-raised-button color="warn"
                 (click)="clearAllMessages()">
@@ -37,17 +36,53 @@
         </button>
       </div>
     </div>
-    <p *ngIf="isAdmin && showDebug">{{debugMsgs}}</p>
-
+    <!--<p *ngIf="isAdmin && showDebug">{{debugMsgs}}</p> Uncomment to debug -->
     <div class="example-button-row" *ngIf="!validated">
-      <button *ngIf="authService.afAuth.user && imageLoaded" mat-raised-button color="primary"
+      <button *ngIf="authService.afAuth.user" mat-raised-button color="primary"
               (click)="setIngressName()">
         To continue Enter Ingress Name
       </button>
     </div>
   </div>
 </div>
-<div class="topbar"></div><!-- spacer -->
+<div class="topbar"></div>
+<img *ngIf="!validated" alt="Waiting Waves" [src]="waves">
+<div *ngIf="validated && dataReady" [style.width.px]="bannerWidth">
+  <mat-grid-list cols="{{columnRecDataArray.length}}" rowHeight="1:1">
+    <mat-grid-tile-header [style.border]="black">
+      <mat-grid-tile class="column-50" [style.background]="colRec.backColor"
+                     *ngFor="let colRec of columnRecDataArray" (click)="showColumnInfo(colRec)">
+        <div class="gridItem">
+          <h3 class="overflow" [style.color]="mediumgrey">Column {{colRec.column.name}}</h3>
+          <h1 *ngIf="colRec.columnChar.final.char !== ''" class="overflow"><strong>&nbsp;
+            {{colRec.columnChar.final.char}}&nbsp;</strong>
+          </h1>
+          <i *ngIf="colRec.columnChar.notes !== ''" class="overflow" [style.color]="mediumgrey" [style.font-size.em]=".8">
+            {{colRec.columnChar.notes}}
+          </i><br>
+          <i class="overflow" [style.color]="darkgrey" [style.font-size.em]="1">
+            {{colRec.columnChar.portalCount}}/{{colRec.columnChar.portalsLength}}
+            found
+          </i>
+        </div>
+      </mat-grid-tile>
+    </mat-grid-tile-header>
+    <mat-grid-tile class="portal-50" [style.background]="gridItem.color"
+                   *ngFor="let gridItem of gridList">
+      <div class="gridItem" *ngIf="gridItem.id" (click)="openPortalDialog(gridItem.prtlRec)">
+        <h3 class="overflow" [style.color]="mediumgrey">{{gridItem.id}}</h3>
+        <i *ngIf="gridItem.prtlRec.owner" class="overflow" [style.color]="mediumgrey" [style.font-size.em]=".7">
+          By: {{gridItem.prtlRec.owner}}
+        </i>
+        <i *ngIf="!gridItem.prtlRec.owner" class="overflow" [style.color]="mediumgrey" [style.font-size.em]=".7">
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </i>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>
+<!--
+<div class="topbar"></div>
 <div class="container">
   <div>
     <app-speed-dial *ngIf="dataReady && validated" (action)="onSpeedDial($event)"></app-speed-dial>
@@ -99,5 +134,8 @@
     </canvas>
   </div>
 </div>
+-->
+<!--
 <img *ngIf="src" alt="IngressFS @home Password Challenge" class="displayNone"
      #myImage [src]="this.src" (load)="onImageLoad(myImage)"/>
+     -->
