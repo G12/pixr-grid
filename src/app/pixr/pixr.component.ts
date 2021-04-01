@@ -184,9 +184,9 @@ export class PixrComponent implements OnInit, AfterViewInit {
           const prtlRec = this.initPortalRec(col, prtl);
           gridItem.prtlRec = prtlRec;
           if (prtlRec.latLng) {
-            gridItem.color = this.lightgrey;
+            gridItem.color = this.grey;
           } else {
-              gridItem.color = this.grey;
+              gridItem.color = this.lightgrey;
           }
         } else {
           gridItem.id = null;
