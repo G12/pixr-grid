@@ -19,6 +19,7 @@ import {AuthService} from '../services/auth.service';
 import {UsersService} from '../services/users.service';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {MapDialogComponent} from '../dialogs/map/map-dialog.component';
+import {ExportComponent} from '../dialogs/export/export.component';
 
 // https://fevgames.net/ifs/ifsathome/2021-03/17631729871888592910113823558419958.jpg
 
@@ -123,6 +124,7 @@ export class PixrComponent implements OnInit, AfterViewInit {
 
   maxPortals: number;
   gridList: GridItem[];
+  csv: string[];
   isUpdate = false;
 
   constructor(public authService: AuthService,
@@ -167,6 +169,29 @@ export class PixrComponent implements OnInit, AfterViewInit {
       scale: this.scale,
     };
     return dlgData;
+  }
+
+  makeCSV(): string[] {
+    console.log('buildGridlist()');
+    const nwln = '\r\n';
+    this.csv = [];
+    for ( let i = 1; i <= this.maxPortals; i++) {
+      this.rawData.columns.forEach(col => {
+        const prtl = col.portals.find
+        (pr => pr.colName === col.name && pr.index === i);
+        if (prtl) {
+          let url: string = null;
+          const prtl2: PortalRec = this.portalRecs.find(p => p.index === prtl.index && p.colName === col.name);
+          if (prtl2) {
+            url = 'By ' + prtl2.owner + ': ' + prtl2.url;
+          }
+          let temp = col.name + ':' + i + ' ';
+          if (url) { temp += url; }
+          this.csv.push(temp + nwln + nwln);
+        }
+      });
+    }
+    return this.csv;
   }
 
   buildGridlist(): void {
@@ -523,6 +548,13 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
   }
 
+  openExportDialog(strArray: string[]): void {
+    const dialogRef = this.dialog.open(ExportComponent, {
+      width: '600px',
+      data: strArray
+    });
+  }
+
   private makeLatLng(url: string): LatLng {
     if (url) {
       const arr = url.split('?');
@@ -551,6 +583,12 @@ export class PixrComponent implements OnInit, AfterViewInit {
     if (confirm('CLEAR_ALL_MESSAGES')) {
       this.projectService.clearLog(this.rawData.id);
     }
+  }
+
+  exportCSV(): void {
+    const csv = this.makeCSV();
+    this.openExportDialog(csv);
+    console.log(csv);
   }
 }
 
