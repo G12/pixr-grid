@@ -24,11 +24,12 @@
       </div>
       <div *ngIf="!isAdmin" class="button_row"><h1>{{rawData.name}}</h1></div>
       <div class="button_row"><h1><strong>
-        <span class="letter" *ngFor="let colRec of columnRecDataArray">
+        <span class="letter" *ngFor="let colRec of columnRecDataArray"
+              (click)="showPasscode(columnRecDataArray)">
           {{colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : '&nbsp;&nbsp;'}}</span>
       </strong></h1>
       </div>
-      <span><strong> beta:001.004</strong></span>
+      <span><strong> beta:001.005</strong></span>
       <div class="button_row">
         <button *ngIf="isAdmin" mat-raised-button color="warn"
                 (click)="clearAllMessages()">
@@ -37,6 +38,10 @@
         <button *ngIf="validated" mat-raised-button color="primary"
                 (click)="exportCSV()">
           Export
+        </button>
+        <button *ngIf="validated" mat-raised-button color="accent"
+                (click)="showStats()">
+          STATS
         </button>
       </div>
     </div>
@@ -60,7 +65,11 @@
           <h3 class="overflow" [style.color]="mediumgrey">Column {{colRec.column.name}}</h3>
           <h1 *ngIf="colRec.columnChar.final.char !== ''" class="overflow"><strong>&nbsp;
             {{colRec.columnChar.final.char}}&nbsp;</strong>
+
           </h1>
+          <i *ngIf="colRec.columnChar.final.char.length > 0" [style.color]="darkgrey" [style.font-size.em]=".9">
+            by {{colRec.columnChar.final.ingressName}}
+          </i><br>
           <i *ngIf="colRec.columnChar.notes !== ''" class="overflow" [style.color]="mediumgrey" [style.font-size.em]=".8">
             {{colRec.columnChar.notes}}
           </i><br>

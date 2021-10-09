@@ -10,9 +10,9 @@ import {
   LatLng,
   Messages,
   MetaData,
-  MsgDat,
+  MsgDat, PlayerStats,
   PortalRec,
-  RawData
+  RawData, StatsList
 } from '../project.data';
 import {AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AuthService} from '../services/auth.service';
@@ -20,6 +20,7 @@ import {UsersService} from '../services/users.service';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {MapDialogComponent} from '../dialogs/map/map-dialog.component';
 import {ExportComponent} from '../dialogs/export/export.component';
+import {StatsComponent} from '../dialogs/stats/stats.component';
 
 // https://fevgames.net/ifs/ifsathome/2021-03/17631729871888592910113823558419958.jpg
 
@@ -169,6 +170,65 @@ export class PixrComponent implements OnInit, AfterViewInit {
       scale: this.scale,
     };
     return dlgData;
+  }
+
+  ///////////////  April 30 2020 //////////////////////
+  showPasscode(columnRecDataArray: ColumnRecData[]): void {
+    let str = '';
+    columnRecDataArray.forEach(colRec => {
+      str += colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : ' ';
+    });
+    prompt('Current Passcode Value', str);
+  }
+
+  makeStats(): StatsList {
+    const statsList: StatsList = {stats: [], code: '', count: 0, total: 0,
+      prtlcount: 0, prtltotal: 0};
+    this.allIngressNames.forEach(value => {
+      const playerStats: PlayerStats = {
+        playerName: value.name,
+        portalsDiscovered: 0,
+        lettersDetermined: 0,
+      };
+      statsList.stats.push(playerStats);
+    });
+
+    let prtltotal = 0;
+    this.rawData.columns.forEach(colmn => {
+      prtltotal += colmn.portals.length;
+    });
+
+    let code = '';
+    let count = 0;
+    let prtlcount = 0;
+    this.columnRecDataArray.forEach(colRec => {
+      if (colRec.columnChar.final.char) { count++; }
+      code += colRec.columnChar.final.char !== '' ? colRec.columnChar.final.char : '_';
+      if (colRec.columnChar.final) {
+        const name = colRec.columnChar.final.ingressName;
+        const stat = statsList.stats.find(s => s.playerName === name);
+        if (stat) {
+          stat.lettersDetermined++;
+        }
+        colRec.portalRecs.forEach(prtlRec => {
+          if (prtlRec.owner) {
+            const stat2 = statsList.stats.find(s => s.playerName === prtlRec.owner);
+            if (stat2) {
+              stat2.portalsDiscovered++;
+              prtlcount++;
+            }
+          }
+        });
+      }
+    });
+    console.log(statsList);
+    const finals: PlayerStats[] = statsList.stats.filter(s => s.portalsDiscovered > 0 || s.lettersDetermined > 0);
+    const finalStats: StatsList = {
+      stats: [], code, count, total: this.rawData.columns.length,
+      prtlcount, prtltotal};
+    finalStats.stats = finals;
+    finalStats.stats.sort((a, b) => b.portalsDiscovered - a.portalsDiscovered);
+    return finalStats;
   }
 
   makeCSV(): string[] {
@@ -555,6 +615,12 @@ export class PixrComponent implements OnInit, AfterViewInit {
     });
   }
 
+  openStatsDialog(data: StatsList): void {
+    const dialogRef = this.dialog.open(StatsComponent, {
+      width: '600px', data
+    });
+  }
+
   private makeLatLng(url: string): LatLng {
     if (url) {
       const arr = url.split('?');
@@ -586,9 +652,11 @@ export class PixrComponent implements OnInit, AfterViewInit {
   }
 
   exportCSV(): void {
-    const csv = this.makeCSV();
-    this.openExportDialog(csv);
-    console.log(csv);
+    this.openExportDialog(this.makeCSV());
+  }
+
+  showStats(): void {
+    this.openStatsDialog(this.makeStats());
   }
 }
 

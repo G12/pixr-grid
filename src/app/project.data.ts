@@ -179,3 +179,18 @@ export interface GridItem {
   color: string;
   prtlRec: PortalRec;
 }
+
+export interface PlayerStats {
+  playerName: string;
+  portalsDiscovered: number;
+  lettersDetermined: number;
+}
+
+export interface StatsList {
+  code: string;
+  count: number;
+  total: number;
+  prtlcount: number;
+  prtltotal: number;
+  stats: PlayerStats[];
+}

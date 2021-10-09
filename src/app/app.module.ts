@@ -14,6 +14,7 @@ import { SpeedDialComponent } from './components/speed-dial/speed-dial.component
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { ClipboardComponent } from './dialogs/clipboard/clipboard.component';
 import { ExportComponent } from './dialogs/export/export.component';
+import { StatsComponent } from './dialogs/stats/stats.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { ExportComponent } from './dialogs/export/export.component';
     SpeedDialComponent,
     CanvasComponent,
     ClipboardComponent,
-    ExportComponent
+    ExportComponent,
+    StatsComponent
   ],
   imports: [
     BrowserModule,
@@ -42,7 +44,8 @@ import { ExportComponent } from './dialogs/export/export.component';
     PortalInfoDialogComponent,
     MapDialogComponent,
     ClipboardComponent,
-    ExportComponent],
+    ExportComponent,
+    StatsComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
